@@ -1,0 +1,5 @@
+# Ignore training set and test set images. Ignore venv folder
+data/trainingset/images/
+data/testset/images/
+.venv/
+# Added requirements.txt instead
