@@ -1,5 +1,9 @@
-# Ignore training set and test set images. Ignore venv folder
+# Ignore training set and test set images
 data/trainingset/images/
 data/testset/images/
-.venv/
+
+# Ignore SAM Model parameters -> downloadable online
+data/content/
+
 # Added requirements.txt instead
+.venv/
