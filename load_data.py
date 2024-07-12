@@ -2,8 +2,14 @@ import os
 import json
 import multiprocessing
 from torch.utils.data import DataLoader
+from torchvision import transforms
 from sklearn.model_selection import train_test_split
 from data.fecal_egg_dataset import FecalEggDataset
+
+
+# For handling varying-length image-target pair (especially different sized images)
+def collate_fn(batch):
+    return tuple(zip(*batch))
 
 
 def load_datasets(cv_test_split=0.5, device='cpu'):
@@ -28,6 +34,11 @@ def load_datasets(cv_test_split=0.5, device='cpu'):
         random_state=1,     # for consistent results
     )
 
+    # Normalize image to be in range [0, 1]
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+    ])
+
     # Define Dataset and DataLoader
     train_dataset = FecalEggDataset(training_images_path, train_images, train_annotations, device=device)
     validation_dataset = FecalEggDataset(test_images_path, cv_images, test_annotations, device=device)
@@ -41,32 +52,32 @@ def get_data_loaders(cv_test_split=0.5, train_batch=15, cv_batch=10, test_batch=
 
     train_loader = DataLoader(      # With Params for GPU Acceleration
         dataset=train_dataset, 
-        batch_size=train_batch,      # Mini-Batch Gradient Descent
+        batch_size=train_batch,      # For Mini-Batch Gradient Descent
         num_workers=multiprocessing.cpu_count() // 2,   # Num_subprocesses to use for data-loading
         persistent_workers=True,            # Keeps worker processes on for next iteration
-        pin_memory='cuda' in device,        # Data loaded is added to page-locked memory -> efficient transfer to GPU
-        pin_memory_device=device if 'cuda' in device else '',   # Device where data should be loaded -> CUDA if available
-        collate_fn=lambda batch: tuple(zip(*batch)),        # To handle varying length image-target pair
+        pin_memory=device.type == 'cuda',        # Data loaded is added to page-locked memory -> efficient transfer to GPU
+        pin_memory_device=device if device.type == 'cuda' else '',   # Device where data should be loaded -> CUDA if available
+        collate_fn=collate_fn,        # To handle varying length image-target pair
         shuffle=True,
     )
-    validation_loader = DataLoader(      # With Params for GPU Acceleration
+    validation_loader = DataLoader(      
         dataset=validation_dataset, 
-        batch_size=cv_batch,      # Mini-Batch Gradient Descent
-        num_workers=multiprocessing.cpu_count() // 2,   # Num_subprocesses to use for data-loading
-        persistent_workers=True,            # Keeps worker processes on for next iteration
-        pin_memory='cuda' in device,        # Data loaded is added to page-locked memory -> efficient transfer to GPU
-        pin_memory_device=device if 'cuda' in device else '',   # Device where data should be loaded -> CUDA if available
-        collate_fn=lambda batch: tuple(zip(*batch)),        # To handle varying length image-target pair
+        batch_size=cv_batch,     
+        num_workers=multiprocessing.cpu_count() // 2,  
+        persistent_workers=True,           
+        pin_memory=device.type == 'cuda',       
+        pin_memory_device=device if device.type == 'cuda' else '',   
+        collate_fn=collate_fn,
         shuffle=True,
     )
-    test_loader = DataLoader(      # With Params for GPU Acceleration
+    test_loader = DataLoader(      
         dataset=test_dataset, 
-        batch_size=test_batch,      # Mini-Batch Gradient Descent
-        num_workers=multiprocessing.cpu_count() // 2,   # Num_subprocesses to use for data-loading
-        persistent_workers=True,            # Keeps worker processes on for next iteration
-        pin_memory='cuda' in device,        # Data loaded is added to page-locked memory -> efficient transfer to GPU
-        pin_memory_device=device if 'cuda' in device else '',   # Device where data should be loaded -> CUDA if available
-        collate_fn=lambda batch: tuple(zip(*batch)),        # To handle varying length image-target pair
+        batch_size=test_batch,      
+        num_workers=multiprocessing.cpu_count() // 2,   
+        persistent_workers=True,           
+        pin_memory=device.type == 'cuda',        
+        pin_memory_device=device if device.type == 'cuda' else '',  
+        collate_fn=collate_fn,        
         shuffle=True,
     )
 

@@ -5,6 +5,14 @@ from torchvision.io import read_image
 from torchvision import tv_tensors
 from torchvision.transforms.v2 import functional as F
 
+
+# Normalize TV Tensor Image to become float tensor with range [0, 1]
+def normalize(image):
+    if image.dtype == torch.uint8:
+        image = image.float() / 255
+    return image
+
+
 class FecalEggDataset(Dataset):
 
     def __init__(self, root, images, annotations, transforms=None, device='cpu'):
@@ -27,6 +35,7 @@ class FecalEggDataset(Dataset):
 
         # Input Image
         image = tv_tensors.Image(image).to(self.device)
+        image = normalize(image)
 
         # Target Annotations with Preprocessing
         target = {}
@@ -35,10 +44,8 @@ class FecalEggDataset(Dataset):
             format='XYXY',
             canvas_size=F.get_size(image)
         )
-        target['masks'] = tv_tensors.Mask(annotation['masks']).to(self.device)
         target['labels'] = torch.tensor(annotation['labels'], dtype=torch.int64).to(self.device)
         target['image_id'] = annotation['image_id']       # NOT tensor!
-        target['area'] = torch.tensor(annotation['area'], dtype=torch.float32).to(self.device)
         target['iscrowd'] = iscrowd
 
         # Apply Additional Transformations to Image and Target (if necessary, such as Data Augmentation)

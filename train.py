@@ -5,8 +5,11 @@ from evaluate import evaluate
 
 # Train and Evaluate Model
 def train_model(model, device, train_loader, validation_loader, optimizer, epochs, iou_threshold=0.5, confidence_threshold=0.5):
+    print('Training and Evaluating...')
     for epoch in range(epochs):
         # Train
+        if epoch == 0:
+            print('Training Loop')
         model.train()               # Train Mode: requires_grad=True, Batch Norm on
         loss_sublist = []
         for x, y in train_loader:   # Mini-Batch Gradient Descent
@@ -23,6 +26,8 @@ def train_model(model, device, train_loader, validation_loader, optimizer, epoch
             avg_precision = 0.
             avg_recall = 0.
             num_batch = 0
+            if epoch == 0:
+                print('Training Loop')
             for x_test, y_test in validation_loader:
                 '''
                 List of dictionaries containing labels, scores, masks, and bbox for each object
