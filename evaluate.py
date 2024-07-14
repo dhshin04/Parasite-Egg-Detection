@@ -93,6 +93,7 @@ def evaluate(predictions, targets, iou_threshold=0.5, confidence_threshold=0.5):
     # Average precision and recall in given batch of images
     avg_precision = 0.
     avg_recall = 0.
+    avg_accuracy = 0.       # average accuracy in FEC
 
     for prediction, target in zip(predictions, targets):
         match_list, total_pred, total_gt = match_pred_to_target(prediction, target, iou_threshold)
@@ -104,13 +105,33 @@ def evaluate(predictions, targets, iou_threshold=0.5, confidence_threshold=0.5):
         false_negatives = total_gt - true_positives
 
         # Metrics
-        precision = true_positives / (true_positives + false_positives)
-        recall = true_positives / (true_positives + false_negatives)
+        actual_positives = true_positives + false_positives      # FEC found by model
+        expected_positives = true_positives + false_negatives          # True FEC
+        if actual_positives == 0:
+            precision = 0
+        else:
+            precision = true_positives / actual_positives
+
+        if expected_positives == 0:
+            recall = 0
+        else:
+            recall = true_positives / expected_positives
+
+        # 1 - percent error
+        if expected_positives == 0:
+            if actual_positives == 0:
+                accuracy = 1
+            else:
+                accuracy = 0
+        else:
+            accuracy = 1 - abs(actual_positives - expected_positives) / expected_positives
 
         avg_precision += precision
         avg_recall += recall
+        avg_accuracy += accuracy
     
     avg_precision /= num_images
     avg_recall /= num_images
+    avg_accuracy /= num_images
 
-    return avg_precision, avg_recall
+    return avg_precision, avg_recall, avg_accuracy

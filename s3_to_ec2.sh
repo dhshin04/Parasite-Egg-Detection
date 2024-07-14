@@ -1,4 +1,4 @@
-# Configurations - need to run only once
+# Configurations - need to only run once
 # sudo apt-get update
 # sudo apt-get install awscli -y
 # aws configure

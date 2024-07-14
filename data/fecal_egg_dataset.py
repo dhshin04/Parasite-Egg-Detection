@@ -31,10 +31,10 @@ class FecalEggDataset(Dataset):
 
         # None of the masks are crowds (only contain single instances)
         num_bbox = len(annotation['boxes'])
-        iscrowd = torch.zeros((num_bbox), dtype=torch.int64).to(self.device)
+        iscrowd = torch.zeros((num_bbox), dtype=torch.int64)
 
         # Input Image
-        image = tv_tensors.Image(image).to(self.device)
+        image = tv_tensors.Image(image)
         image = normalize(image)
 
         # Target Annotations with Preprocessing
@@ -44,13 +44,19 @@ class FecalEggDataset(Dataset):
             format='XYXY',
             canvas_size=F.get_size(image)
         )
-        target['labels'] = torch.tensor(annotation['labels'], dtype=torch.int64).to(self.device)
+        target['labels'] = torch.tensor(annotation['labels'], dtype=torch.int64)
         target['image_id'] = annotation['image_id']       # NOT tensor!
         target['iscrowd'] = iscrowd
 
         # Apply Additional Transformations to Image and Target (if necessary, such as Data Augmentation)
         if self.transforms is not None:
             image, target = self.transforms(image, target)
+
+        # Move to CUDA if available
+        # image = image.to(self.device)
+        # target['boxes'] = target['boxes'].to(self.device)
+        # target['labels'] = target['labels'].to(self.device)
+        # target['iscrowd'] = target['iscrowd'].to(self.device)
         
         return image, target
 
