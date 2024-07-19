@@ -136,16 +136,17 @@ def predict(image_path):
     image = image.unsqueeze(0)     # model requires list of images
 
     # Load Pre-trained Mask R-CNN Model with Custom-Trained Parameters
-    model = fasterrcnn_mobilenet_v3_large_fpn(weights=None)
-    
     model_version = 'general_model_weights.pth'
     checkpoint_path = os.path.join(os.path.dirname(__file__), 'saved_models', model_version)
     checkpoint = torch.load(checkpoint_path, map_location=DEVICE)
 
+    model = fasterrcnn_mobilenet_v3_large_fpn(weights=None)
+
     in_features_box = model.roi_heads.box_predictor.cls_score.in_features
     num_classes = checkpoint['num_classes']
     model.roi_heads.box_predictor = faster_rcnn.FastRCNNPredictor(in_features_box, num_classes)
-
+    
+    model.load_state_dict(checkpoint['model_state_dict'])
     model.to(DEVICE)
 
     # Make Inference

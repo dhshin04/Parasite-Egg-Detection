@@ -51,6 +51,7 @@ def main():
         train_batch=train_batch,
         cv_batch=cv_batch,
         device=DEVICE,
+        data_type='general',
     )
 
 

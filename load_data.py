@@ -14,7 +14,24 @@ def collate_fn(batch):
     return tuple(zip(*batch))
 
 
-def load_datasets(cv_test_split=0.5, device='cpu'):
+def retrieve_data_path(data_type=None):
+    '''
+    Retrieve path to dataset
+
+    Arguments:
+        data_type (str): general or strongylid
+    '''
+    if data_type == 'strongylid':
+        pass
+    dataset_path = os.path.join(os.path.dirname(__file__), 'data', 'dataset')
+    images_path = os.path.join(dataset_path, 'images')
+    labels_path = os.path.join(dataset_path, 'refined_labels.json')
+    with open(labels_path, 'r') as refined_labels:
+        annotations = json.load(refined_labels)
+    return images_path, annotations
+
+
+def load_datasets(cv_test_split=0.5, device='cpu', data_type=None):
     '''
     Preprocess Data: put images and annotations into Fecal Egg Dataset
 
@@ -24,17 +41,14 @@ def load_datasets(cv_test_split=0.5, device='cpu'):
     Returns:
         (tuple): training set, validation set, test set in FecalEggDataset format
     '''
+
     # Load Image and Annotations
-    testset_path = os.path.join(os.path.dirname(__file__), 'data', 'dataset')
-    test_images_path = os.path.join(testset_path, 'images')
-    test_labels_path = os.path.join(testset_path, 'refined_labels.json')
-    with open(test_labels_path, 'r') as refined_test_labels:
-        test_annotations = json.load(refined_test_labels)
+    images_path, annotations = retrieve_data_path(data_type)
 
     # Prepare list of image names -> used by dataset and data loader
     train_images, test_images = even_train_test_split(
-        sorted(os.listdir(test_images_path)),
-        annotations=test_annotations,
+        sorted(os.listdir(images_path)),
+        annotations=annotations,
         test_size=0.4,
         random_seed=10,
     )
@@ -46,14 +60,14 @@ def load_datasets(cv_test_split=0.5, device='cpu'):
     )
 
     # Define Dataset and DataLoader
-    train_dataset = FecalEggDataset(test_images_path, train_images, test_annotations, device=device, transforms=transform)
-    validation_dataset = FecalEggDataset(test_images_path, cv_images, test_annotations, device=device)
-    test_dataset = FecalEggDataset(test_images_path, test_images, test_annotations, device=device)
+    train_dataset = FecalEggDataset(images_path, train_images, annotations, device=device, transforms=transform)
+    validation_dataset = FecalEggDataset(images_path, cv_images, annotations, device=device)
+    test_dataset = FecalEggDataset(images_path, test_images, annotations, device=device)
 
     return train_dataset, validation_dataset, test_dataset
 
 
-def get_data_loaders(cv_test_split=0.5, train_batch=8, cv_batch=8, test_batch=8, device='cpu'):
+def get_data_loaders(cv_test_split=0.5, train_batch=8, cv_batch=8, test_batch=8, device='cpu', data_type=None):
     '''
     Turn Dataset into DataLoader
 
@@ -68,7 +82,7 @@ def get_data_loaders(cv_test_split=0.5, train_batch=8, cv_batch=8, test_batch=8,
     '''
 
     # Load Dataset
-    train_dataset, validation_dataset, test_dataset = load_datasets(cv_test_split, device)
+    train_dataset, validation_dataset, test_dataset = load_datasets(cv_test_split, device, data_type)
 
     # Create Data Loaders
     train_loader = DataLoader(      # With Params for GPU Acceleration

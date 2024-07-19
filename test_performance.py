@@ -76,11 +76,12 @@ def test_performance(model, data_loader, iou_threshold, confidence_threshold):
 
 def main():
     # Load Test Data For Inference
-    train_loader, validation_loader, test_loader = load_data.get_data_loaders(
+    _, validation_loader, test_loader = load_data.get_data_loaders(
         cv_test_split=0.5,
         cv_batch=8,
         test_batch=8,
         device=DEVICE,
+        data_type='general',
     )
 
     # Load Hyperparameters
