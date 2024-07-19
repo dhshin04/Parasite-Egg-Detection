@@ -7,9 +7,15 @@ def even_train_test_split(image_list, annotations, test_size=0.5, random_seed=1)
     Splits set into training and test sets BUT ensures training set has even amount
     of images from each category.
 
-    image_list (list): List of image names
-    annotations (dictionary): Dictionary of image name and annotation dict pairs
+    Arguments:
+        image_list (list): List of image names
+        annotations (dictionary): Dictionary of image name and annotation dict pairs
+        test_size (float): Ratio of test size
+        random_seed (int): Random seed for consistent results
+    Returns:
+        (tuple): Lists of image names, one for training and other for test sets
     '''
+
     random.seed(random_seed)
 
     if test_size > 1 or test_size < 0:
@@ -32,14 +38,14 @@ def even_train_test_split(image_list, annotations, test_size=0.5, random_seed=1)
     for image_name in image_list:
         annotation = annotations[image_name]
         labels = annotation['labels']
-        if len(labels) > 0:
+        if len(labels) > 0:     # If image has object, put image in appropriate category list
             category = labels[0]
             image_into_category[category].append(image_name)
     
     train_images = []
     test_images = []
-    for images in image_into_category.values():
-        for image_name in images:
+    for images in image_into_category.values():     # from each category list
+        for image_name in images:                   # retrieve image and put into either training or test sets
             if random.random() >= test_size:
                 train_images.append(image_name)
             else:

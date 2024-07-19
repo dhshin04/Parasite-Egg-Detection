@@ -6,6 +6,15 @@ from find_image_name import find_image_name_by_id, find_image_name_efficient
 
 
 def refine_bbox(old_bbox):
+    '''
+    Change bounding box format from COCO to PASCAL VOC
+
+    Arguments:
+        old_bbox (tensor): Bounding box in COCO format
+    Returns:
+        new_bbox (tensor): Bounding box in PASCAL VOC format
+    '''
+
     # old_bbox = [x, y, width, height] where (x,y) is top left corner of box
     # Positive direction is right, down
     new_bbox = []
@@ -35,9 +44,9 @@ def refine_json(in_json_path, out_json_path, dataset_type=None):
 
         for original_annotation in original_annotations:
             image_id = original_annotation['image_id']       # Image ID of Annotation
-            if dataset_type == 'training':      # labels.json
+            if dataset_type == 'test':      
                 image_name = find_image_name_efficient(image_id)
-            else:       # test_labels.json
+            else:       
                 image_name = find_image_name_by_id(in_json_path, image_id)
 
             # Find bounding box and mask instance for this annotation
@@ -62,14 +71,14 @@ def refine_json(in_json_path, out_json_path, dataset_type=None):
 
 
 def main():
-    # Create refined labels for training set
-    in_json_path = os.path.join(os.path.dirname(__file__), 'trainingset', 'labels.json')
-    out_json_path = os.path.join(os.path.dirname(__file__), 'trainingset', 'refined_labels.json')
-    refine_json(in_json_path, out_json_path, dataset_type='training')
+    # Create refined labels for data set
+    in_json_path = os.path.join(os.path.dirname(__file__), 'dataset', 'labels.json')
+    out_json_path = os.path.join(os.path.dirname(__file__), 'dataset', 'refined_labels.json')
+    refine_json(in_json_path, out_json_path, dataset_type='dataset')
     
-    # Create refined labels for validation/test sets
-    in_json_path = os.path.join(os.path.dirname(__file__), 'testset', 'test_labels.json')
-    out_json_path = os.path.join(os.path.dirname(__file__), 'testset', 'refined_test_labels.json')
+    # Create refined labels for test
+    in_json_path = os.path.join(os.path.dirname(__file__), 'test', 'labels.json')
+    out_json_path = os.path.join(os.path.dirname(__file__), 'test', 'refined_labels.json')
     refine_json(in_json_path, out_json_path, dataset_type='test')
 
 

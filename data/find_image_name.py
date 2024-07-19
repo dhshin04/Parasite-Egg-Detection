@@ -2,8 +2,9 @@
 import json
 
 
-# General way to finding image name by ID
 def find_image_name_by_id(json_path, image_id):
+    # General way to finding image name by ID
+
     with open(json_path, 'r') as json_file:
         json_data = json.load(json_file)
         images = json_data['images']
@@ -13,8 +14,9 @@ def find_image_name_by_id(json_path, image_id):
         raise Exception(f"Image with this ID not found: {image_id}")
 
 
-# More efficient way to finding image name - works only for training set
 def find_image_name_efficient(image_id):
+    # More efficient way to finding image name - works only for test folder images
+
     # All image names end with 'ParasiteName_XXXX.jpg'
     category = (image_id - 1) // 1000
 

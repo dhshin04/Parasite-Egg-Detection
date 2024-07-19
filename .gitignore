@@ -1,6 +1,6 @@
 # Ignore training set and test set images
-data/trainingset/images/
-data/testset/images/
+data/dataset/images/
+data/test/images/
 
 # Ignore SAM Model parameters -> downloadable online
 data/content/

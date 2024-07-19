@@ -3,6 +3,7 @@
 # sudo apt-get install awscli -y
 # aws configure
 
+# Move images in S3 to EC2 Instance
 S3_BUCKET="ieee-dataport"
 S3_PATH_TRAIN="competition/420/Chula-ParasiteEgg-11.zip"
 LOCAL_PATH_TRAIN="/home/ubuntu/data/trainingset/images/"

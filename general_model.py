@@ -1,6 +1,9 @@
 ''' Classifies 11 different fecal eggs '''
 
 import os
+import load_data
+from train import train_model
+
 import torch
 from torch import optim
 from torch.optim.lr_scheduler import LambdaLR, CosineAnnealingLR, SequentialLR
@@ -9,46 +12,33 @@ from torchvision.models.detection import fasterrcnn_mobilenet_v3_large_fpn, fast
 from torch.cuda.amp import GradScaler
 torch.manual_seed(1234)
 
-# Custom Modules
-import load_data
-from train import train_model
-
 DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-'''
-Structure of Torchvision's Faster R-CNN MobileNet-Large-FPN Model:
-
-    Feature extraction - MobileNet (for faster computation)
-        - model.backbone.body
-            .parameters() for just param OR named_parameters() to access layer names
-    Consistency in feature maps - FPN (for objects of varying sizes)
-        - model.backbone.fpn
-    Region proposals of where objects likely are based on features - RPN
-        - model.rpn
-    Classification & bounding box predictions - ROI Heads
-        - model.roi_heads
-'''
 
 # Hyperparameters
 train_batch = 8                 # Train Loader Batch Size
 cv_batch = 8                    # Validation Loader Batch Size
 accumulation_size = 1           # For Gradient Accumulation
-learning_rate = 1e-4            # For Training - best: 5e-5; potential: 1e-4, 5e-4, 1e-6
+learning_rate = 1e-4            # For Training
 epochs = 20                     # For Training
-warmup_step = 10                # For LR Warmup
-scale_train_set = 1.0
+warmup_step = 10                # For LambdaLR Warmup
+weight_decay = 0.0005           # For AdamW 
+T_max = epochs                  # For CosineAnnealingLR
+eta_min = learning_rate / 30    # For CosineAnnealingLR
 
 iou_threshold = 0.5             # For Evaluation
 confidence_threshold = 0.5      # For Evaluation
 
 
-# Used for making predictions
-def export_hyperparameters():
-    return iou_threshold, confidence_threshold
+def warmup(epoch):
+    '''
+    For LambdaLR. Warms up learning rate for smoother convergence.
 
-
-def warmup(epoch):       # Learning Rate Warmup (Lambda)
-    # Warm-Up over step_size epochs
+    Arguments:
+        epoch (int): Current epoch 
+    Returns:
+        (float): Scaled learning rate
+    '''
     if epoch < warmup_step:
         return float(epoch) / warmup_step
     return 1.
@@ -61,35 +51,17 @@ def main():
         train_batch=train_batch,
         cv_batch=cv_batch,
         device=DEVICE,
-        scale_train_set=scale_train_set,
     )
 
 
     ''' Model Fine-Tuning '''
-    # Load Pre-trained Faster R-CNN Model with Pretrained Parameters
+    # Load Pre-trained Faster R-CNN Model with Pretrained Weights
     model = fasterrcnn_mobilenet_v3_large_fpn(weights='DEFAULT')
 
-    '''
-    # Freeze parameters of early layers, while unfreezing later layers for fine-tuning
-    for param in model.backbone.body.parameters():
-        param.requires_grad = False         # Freeze backbone layers
-
-    for param in model.backbone.fpn.parameters():
-        param.requires_grad = False         # Freeze fpn layers (objects are mostly similar in size)
-
-    for param in model.rpn.parameters():
-        param.requires_grad = False         # Freeze rpn layers
-    '''
-
-    # Fine-Tune Box Predictor (Classifier + Object Detection)
+    # Fine-Tune Box Predictor (Classifier + Bounding Box Predictor)
     in_features_box = model.roi_heads.box_predictor.cls_score.in_features    # Original input to box predictor fc layers
     num_classes = 12        # 11 classes + background
     model.roi_heads.box_predictor = faster_rcnn.FastRCNNPredictor(in_features_box, num_classes)
-
-    '''
-    for param in model.roi_heads.parameters():
-        param.requires_grad = True          # Unfreeze fc layers
-    '''
 
     model.to(DEVICE)
 
@@ -98,13 +70,14 @@ def main():
     optimizer = optim.AdamW(
         [parameters for parameters in model.parameters() if parameters.requires_grad],  # only alter params of unfreezed layers
         lr=learning_rate,
-        # momentum=0.9,
-        weight_decay=0.0005,
+        weight_decay=weight_decay,
     )
-    cos_scheduler = CosineAnnealingLR(optimizer, T_max=epochs, eta_min=(learning_rate/30))   # LR Warmup to Complement Adam
-    warmup_scheduler = LambdaLR(optimizer, lr_lambda=warmup)
-    scheduler = SequentialLR(optimizer, schedulers=[warmup_scheduler, cos_scheduler], milestones=[5])
-    scaler = GradScaler()
+
+    warmup_scheduler = LambdaLR(optimizer, lr_lambda=warmup)                     # LR Warmup to Complement AdamW
+    cos_scheduler = CosineAnnealingLR(optimizer, T_max=T_max, eta_min=eta_min)   # LR Scheduler to Complement AdamW
+    scheduler = SequentialLR(optimizer, schedulers=[warmup_scheduler, cos_scheduler], milestones=[warmup_step])
+    
+    scaler = GradScaler()   # Mixed Precision for faster training
 
     # Train and Evaluate Model
     train_model(        # Stored in train.py
@@ -122,7 +95,7 @@ def main():
     )
 
     # Save Model
-    checkpoint_path = os.path.join(os.path.dirname(__file__), 'saved_models', 'general_FEC_weights.pth')
+    checkpoint_path = os.path.join(os.path.dirname(__file__), 'saved_models', 'general_model_weights.pth')
     torch.save({
         'model_type': 'fasterrcnn_mobilenet_v3_large_fpn',
         'model_state_dict': model.state_dict(),
@@ -131,5 +104,5 @@ def main():
 
 
 if __name__ == '__main__':
-    mp.set_start_method('spawn', force=True)        # for multiprocessing
+    mp.set_start_method('spawn', force=True)        # for compatibility with Windows multiprocessing
     main()

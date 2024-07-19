@@ -4,6 +4,8 @@ import copy
 
 
 def random_rotate_90(image, annotation):
+    # Randomly rotate given image and bounding boxes by 90 degree intervals
+    
     # Image is tensor, annotation is a dict
     degree = 90 * random.randint(0, 3)
     if degree == 0:
@@ -38,6 +40,8 @@ def random_rotate_90(image, annotation):
 
 
 def random_horizontal_flip(image, annotation, p=0.5):
+    # Horizontally flip image and bounding box with probability of p
+
     if random.random() < p:
         width, _ = image.size
 
@@ -62,6 +66,8 @@ def random_horizontal_flip(image, annotation, p=0.5):
 
 
 def transform(image, annotation):
+    # Apply transformations on image
+
     # Rotate and flip
     to_pil = transforms.ToPILImage()
     to_tensor = transforms.ToTensor()
@@ -73,42 +79,8 @@ def transform(image, annotation):
 
     image = to_tensor(image)
 
-    # Color Jitter
+    # Color Jitter - omitted for now due to increase in train time
     # color_jitter = transforms.ColorJitter(brightness=0.1, contrast=0.2, saturation=0.2, hue=0.1)
     # image = color_jitter(image)
 
     return image, annotation
-
-
-if __name__ == '__main__':
-    import os
-    import json
-    from data.fecal_egg_dataset import FecalEggDataset
-    from split import even_train_test_split
-    import time
-    import random
-
-    testset_path = os.path.join(os.path.dirname(__file__), 'data', 'testset')
-    test_images_path = os.path.join(testset_path, 'images')
-    test_labels_path = os.path.join(testset_path, 'refined_test_labels.json')
-    with open(test_labels_path, 'r') as refined_test_labels:
-        test_annotations = json.load(refined_test_labels)
-    
-    train_images, test_images = even_train_test_split(
-        sorted(os.listdir(test_images_path)),
-        annotations=test_annotations,
-        test_size=0.4,
-        random_seed=10,
-    )
-
-    train_dataset = FecalEggDataset(test_images_path, train_images, test_annotations, transforms=transform)
-
-    print('Start Count!')
-    start = time.time()
-    for i in range(1351):
-        if i % 135 == 0:
-            print(f'{i / 1350 * 100:.2f}% done')
-        image, target = train_dataset.__getitem__(random.randint(0, 1000))
-    end = time.time()
-
-    print(f'Elapsed Time: {end - start:.1f}s')

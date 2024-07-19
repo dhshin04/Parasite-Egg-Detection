@@ -4,12 +4,13 @@ import torch
 
 def iou(box1, box2):
     '''
+    Compute IoU scores given two bounding boxes
+
     Arguments:
         box1 (torch.Tensor): [4] tensor that stores (x1, y1, x2, y2)
         box2 (torch.Tensor): [4] tensor that stores (x3, y3, x4, y4)
-    
-        Returns:
-            (float): Intersection over Union value for 2 boxes
+    Returns:
+        (float): Intersection over Union value for 2 boxes
     '''
 
     # Area of Intersection is given as:
@@ -35,10 +36,11 @@ def iou(box1, box2):
 
 def match_pred_to_target(prediction, target, iou_threshold=0.5):
     '''
+    Match bounding boxes in prediction to boxes in target
+
     Arguments:
         prediction (dict): Prediction dictionary for single image
         target (dict): Target dictionary for single image
-
     Returns:
         (int[]): Matching prediction box (index) and target box (value at index).
                  Value of -1 represents no match available.
@@ -74,28 +76,35 @@ def match_pred_to_target(prediction, target, iou_threshold=0.5):
 
 
 def compare_labels(prediction, target, match_list, confidence_threshold=0.5):
+    '''
+    For two matching predictions by bounding box, compute whether labels also match
+
+    Arguments:
+        prediction (dict): Dictionary of prediction
+        target (dict): Dictionary of target
+        match_list (int[]): Matching prediction box (index) and target box (value at index).
+                            Value of -1 represents no match available.
+        confidence_threshold (float): Only bounding boxes with greater confidence considered
+    Returns:
+        true_positives (int): Number of true positives in image
+    '''
     p_label = prediction['labels']
     t_label = target['labels']
     true_positives = 0
-    confidence_avg = 0.
 
     for i, match in enumerate(match_list, 0):   # Match list has length of predictions
-        confidence_avg += prediction["scores"][i]
         # No bbox match or too low confidence
         if match < 0 or prediction['scores'][i] < confidence_threshold:
             continue
         if p_label[i] == t_label[match]:    # Matching bbox and labels
             true_positives += 1
     
-    if len(match_list) == 0:
-        confidence_avg = 0
-    else:
-        confidence_avg /= len(match_list)
-    # print(f'Confidence Average For Image: {confidence_avg:.4f}')
     return true_positives
 
 
 def evaluate(predictions, targets, iou_threshold=0.5, confidence_threshold=0.5):
+    # Compute average value of precision and recall for predictions made
+    
     if len(predictions) != len(targets):
         raise ValueError('Logical Error: predictions tensor and targets tensor are different lengths')
     
