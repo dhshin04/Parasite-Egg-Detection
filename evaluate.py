@@ -16,15 +16,15 @@ def iou(box1, box2):
     x1 = box1[0].item(); y1 = box1[1].item(); x2 = box1[2].item(); y2 = box1[3].item()
     x3 = box2[0].item(); y3 = box2[1].item(); x4 = box2[2].item(); y4 = box2[3].item()
 
-    distance_x = min(x2, x4) - max(x1, x3)
-    distance_y = min(y2, y4) - max(y1, y3)
+    distance_x = min(x2, x4) - max(x1, x3) + 1  # +1 includes pixel that xn covers
+    distance_y = min(y2, y4) - max(y1, y3) + 1  # +1 includes pixel that yn covers
     if distance_x <= 0 or distance_y <= 0:      # Indicates no overlaps
         intersection = 0
     else:
         intersection = distance_x * distance_y
 
-    box1_area = (x2 - x1) * (y2 - y1)
-    box2_area = (x4 - x3) * (y4 - y3)
+    box1_area = (x2 - x1 + 1) * (y2 - y1 + 1)
+    box2_area = (x4 - x3 + 1) * (y4 - y3 + 1)
     union = box1_area + box2_area - intersection
 
     if union <= 0:
@@ -44,25 +44,27 @@ def match_pred_to_target(prediction, target, iou_threshold=0.5):
                  Value of -1 represents no match available.
     '''
     prediction_boxes = prediction['boxes']
-    target_boxes = copy.deepcopy(target['boxes'])
+    target_boxes = target['boxes']
+    target_used = torch.zeros(len(target_boxes), dtype=torch.bool)
 
-    potential_true_positives = 0
     match_list = []
-    for p_box in prediction_boxes:
+    for i, p_box in enumerate(prediction_boxes, 0):
         max_iou = 0         # Minimum IoU value
         max_index = -1      # When all available target boxes have IoU of 0
-        for i, t_box in enumerate(target_boxes, 0):
+        for j, t_box in enumerate(target_boxes, 0):
+            if target_used[j]:
+                continue
+
             computed_iou = iou(p_box, t_box)
 
             # If the computed IoU is above threshold and max IoU, it is considered
             # potential true positive. 
             if computed_iou >= iou_threshold and computed_iou > max_iou:
                 max_iou = computed_iou
-                max_index = i
+                max_index = j
         # Max IoU target box now belongs to this p_box alone -> setting it to 0 means future IoU is also 0
         if max_iou > 0:     # Some matching target box found
-            target_boxes[max_index] = torch.FloatTensor([0, 0, 0, 0])
-            potential_true_positives += 1   # Still potential positive since label needs to be compared
+            target_used[max_index] = True
         match_list.append(max_index)
     
     total_pred = len(prediction_boxes)  # Total Prediction Labels (Boxes generated)
@@ -75,12 +77,21 @@ def compare_labels(prediction, target, match_list, confidence_threshold=0.5):
     p_label = prediction['labels']
     t_label = target['labels']
     true_positives = 0
+    confidence_avg = 0.
+
     for i, match in enumerate(match_list, 0):   # Match list has length of predictions
+        confidence_avg += prediction["scores"][i]
         # No bbox match or too low confidence
         if match < 0 or prediction['scores'][i] < confidence_threshold:
             continue
         if p_label[i] == t_label[match]:    # Matching bbox and labels
             true_positives += 1
+    
+    if len(match_list) == 0:
+        confidence_avg = 0
+    else:
+        confidence_avg /= len(match_list)
+    # print(f'Confidence Average For Image: {confidence_avg:.4f}')
     return true_positives
 
 
@@ -93,20 +104,19 @@ def evaluate(predictions, targets, iou_threshold=0.5, confidence_threshold=0.5):
     # Average precision and recall in given batch of images
     avg_precision = 0.
     avg_recall = 0.
-    avg_accuracy = 0.       # average accuracy in FEC
 
     for prediction, target in zip(predictions, targets):
         match_list, total_pred, total_gt = match_pred_to_target(prediction, target, iou_threshold)
         
         # Matching bbox and labels
         true_positives = compare_labels(prediction, target, match_list, confidence_threshold)
-        
+
         false_positives = total_pred - true_positives
         false_negatives = total_gt - true_positives
 
         # Metrics
-        actual_positives = true_positives + false_positives      # FEC found by model
-        expected_positives = true_positives + false_negatives          # True FEC
+        actual_positives = true_positives + false_positives         # FEC found by model
+        expected_positives = true_positives + false_negatives       # True FEC
         if actual_positives == 0:
             precision = 0
         else:
@@ -117,21 +127,10 @@ def evaluate(predictions, targets, iou_threshold=0.5, confidence_threshold=0.5):
         else:
             recall = true_positives / expected_positives
 
-        # 1 - percent error
-        if expected_positives == 0:
-            if actual_positives == 0:
-                accuracy = 1
-            else:
-                accuracy = 0
-        else:
-            accuracy = 1 - abs(actual_positives - expected_positives) / expected_positives
-
         avg_precision += precision
         avg_recall += recall
-        avg_accuracy += accuracy
     
     avg_precision /= num_images
     avg_recall /= num_images
-    avg_accuracy /= num_images
 
-    return avg_precision, avg_recall, avg_accuracy
+    return avg_precision, avg_recall

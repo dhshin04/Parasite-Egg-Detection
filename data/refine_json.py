@@ -49,11 +49,13 @@ def refine_json(in_json_path, out_json_path, dataset_type=None):
                     'image_id': image_id,
                     'boxes': [],
                     'labels': [],
+                    'area': []
                 }
                 refined_annotations[image_name] = refined_annotation
 
             refined_annotations[image_name]['boxes'].append(bbox)
             refined_annotations[image_name]['labels'].append(original_annotation['category_id'] + 1)     # Category starts at 1
+            refined_annotations[image_name]['area'].append(original_annotation['area'])
 
     with open(out_json_path, 'w') as refined_labels:
         json.dump(refined_annotations, refined_labels)

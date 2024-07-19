@@ -7,3 +7,9 @@ data/content/
 
 # Added requirements.txt instead
 .venv/
+
+barber_pole_egg_data/
+
+__pycache__/
+
+saved_models/

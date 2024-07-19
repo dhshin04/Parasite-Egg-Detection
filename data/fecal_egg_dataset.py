@@ -29,6 +29,10 @@ class FecalEggDataset(Dataset):
         image_name = self.images[idx]
         annotation = self.annotations[image_name]   # Annotation for Image
 
+        # Data Augmentation
+        if self.transforms is not None:
+            image, annotation = self.transforms(image, annotation)
+
         # None of the masks are crowds (only contain single instances)
         num_bbox = len(annotation['boxes'])
         iscrowd = torch.zeros((num_bbox), dtype=torch.int64)
@@ -45,19 +49,10 @@ class FecalEggDataset(Dataset):
             canvas_size=F.get_size(image)
         )
         target['labels'] = torch.tensor(annotation['labels'], dtype=torch.int64)
+        target['area'] = torch.tensor(annotation['area'], dtype=torch.float32)
         target['image_id'] = annotation['image_id']       # NOT tensor!
         target['iscrowd'] = iscrowd
 
-        # Apply Additional Transformations to Image and Target (if necessary, such as Data Augmentation)
-        if self.transforms is not None:
-            image, target = self.transforms(image, target)
-
-        # Move to CUDA if available
-        # image = image.to(self.device)
-        # target['boxes'] = target['boxes'].to(self.device)
-        # target['labels'] = target['labels'].to(self.device)
-        # target['iscrowd'] = target['iscrowd'].to(self.device)
-        
         return image, target
 
     def __len__(self):
