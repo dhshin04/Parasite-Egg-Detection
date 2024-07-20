@@ -23,7 +23,7 @@ def retrieve_data_path(data_type=None):
     '''
     if data_type == 'strongylid':
         pass
-    dataset_path = os.path.join(os.path.dirname(__file__), 'data', 'dataset')
+    dataset_path = os.path.join(os.path.dirname(__file__), 'data', 'general_dataset')
     images_path = os.path.join(dataset_path, 'images')
     labels_path = os.path.join(dataset_path, 'refined_labels.json')
     with open(labels_path, 'r') as refined_labels:

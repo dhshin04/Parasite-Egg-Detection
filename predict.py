@@ -167,7 +167,7 @@ def predict(image_path):
 if __name__ == '__main__':
     # Example Inference Script for Demonstration
     
-    trainingset_path = os.path.join(os.path.dirname(__file__), 'data', 'test')
+    trainingset_path = os.path.join(os.path.dirname(__file__), 'data', 'general_test')
     training_images_path = os.path.join(trainingset_path, 'images')
     training_labels_path = os.path.join(trainingset_path, 'refined_labels.json')
     with open(training_labels_path, 'r') as refined_labels:
@@ -187,6 +187,6 @@ if __name__ == '__main__':
     fec = predict(image_path)
     print(f'FEC Prediction: {fec}')
 
-    image_path = os.path.join(os.path.dirname(__file__), 'barber_pole_egg_data', 'images', '0003.jpg')
+    image_path = os.path.join(os.path.dirname(__file__), 'data', 'strongylid_data', 'images', 'medium_test.jpeg')
     fec = predict(image_path)
     print(f'\nFEC: {fec}')

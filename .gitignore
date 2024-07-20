@@ -1,6 +1,6 @@
 # Ignore training set and test set images
-data/dataset/images/
-data/test/images/
+data/general_dataset/images/
+data/general_test/images/
 
 # Ignore SAM Model parameters -> downloadable online
 data/content/
@@ -8,7 +8,7 @@ data/content/
 # Added requirements.txt instead
 .venv/
 
-barber_pole_egg_data/
+data/strongylid_data/images/
 
 __pycache__/
 

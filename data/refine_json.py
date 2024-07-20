@@ -72,14 +72,14 @@ def refine_json(in_json_path, out_json_path, dataset_type=None):
 
 def main():
     # Create refined labels for data set
-    in_json_path = os.path.join(os.path.dirname(__file__), 'dataset', 'labels.json')
-    out_json_path = os.path.join(os.path.dirname(__file__), 'dataset', 'refined_labels.json')
-    refine_json(in_json_path, out_json_path, dataset_type='dataset')
+    in_json_path = os.path.join(os.path.dirname(__file__), 'general_dataset', 'labels.json')
+    out_json_path = os.path.join(os.path.dirname(__file__), 'general_dataset', 'refined_labels.json')
+    refine_json(in_json_path, out_json_path, dataset_type='general_dataset')
     
     # Create refined labels for test
-    in_json_path = os.path.join(os.path.dirname(__file__), 'test', 'labels.json')
-    out_json_path = os.path.join(os.path.dirname(__file__), 'test', 'refined_labels.json')
-    refine_json(in_json_path, out_json_path, dataset_type='test')
+    in_json_path = os.path.join(os.path.dirname(__file__), 'general_test', 'labels.json')
+    out_json_path = os.path.join(os.path.dirname(__file__), 'general_test', 'refined_labels.json')
+    refine_json(in_json_path, out_json_path, dataset_type='general_test')
 
 
 if __name__ == '__main__':
