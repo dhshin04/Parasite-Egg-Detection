@@ -1,11 +1,11 @@
 Structure of Torchvision's Faster R-CNN MobileNet-Large-FPN Model:
 
-Feature extraction - MobileNet (for faster computation)
+Feature extraction (used to generate region proposals) - MobileNet (for faster computation)
     - model.backbone.body
         .parameters() for just param OR named_parameters() to access layer names
-Consistency in feature maps - FPN (for objects of varying sizes)
+Consistency in feature maps - FPN (Feature Pyramid Network; for objects of varying sizes)
     - model.backbone.fpn
-Region proposals of where objects likely are based on features - RPN
+Region proposals of where objects likely are based on features - RPN (Region Proposal Network)
     - model.rpn
-Classification & bounding box predictions - ROI Heads
+Classification & bounding box predictions based on region proposals - ROI Heads
     - model.roi_heads

@@ -187,6 +187,6 @@ if __name__ == '__main__':
     fec = predict(image_path)
     print(f'FEC Prediction: {fec}')
 
-    image_path = os.path.join(os.path.dirname(__file__), 'data', 'strongylid_data', 'images', 'medium_test.jpeg')
+    image_path = os.path.join(os.path.dirname(__file__), 'data', 'strongylid_dataset', 'images', 'medium_test.jpeg')
     fec = predict(image_path)
     print(f'\nFEC: {fec}')

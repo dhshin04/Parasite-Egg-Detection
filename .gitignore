@@ -1,15 +1,16 @@
-# Ignore training set and test set images
-data/general_dataset/images/
-data/general_test/images/
-
-# Ignore SAM Model parameters -> downloadable online
-data/content/
+# Ignore PyCache
+__pycache__/
 
 # Added requirements.txt instead
 .venv/
 
-data/strongylid_data/images/
+# Ignore general and strongylid datasets and test
+data/general_dataset/images/
+data/general_test/images/
+data/strongylid_dataset/images/
 
-__pycache__/
+# Ignore SAM Model parameters -> downloadable online
+data/content/
 
+# Ignore custom trained model parameters due to GitHub memory constraint
 saved_models/

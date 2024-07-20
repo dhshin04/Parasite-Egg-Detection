@@ -64,9 +64,19 @@ def main():
     model = fasterrcnn_mobilenet_v3_large_fpn(weights=None, num_classes=checkpoint['num_classes'])
     model.load_state_dict(checkpoint['model_state_dict'])
 
+    # Fine-Tune Model
+    for param in model.backbone.parameters():    # Freeze MobileNet & FPN networks
+        param.requires_grad = False
+    
+    for param in model.rpn.parameters():         # Freeze RPN network
+        param.requires_grad = False
+
     in_features_box = model.roi_heads.box_predictor.cls_score.in_features
     num_classes = 2     # Binary Classification: Strongylid eggs present or not
     model.roi_heads.box_predictor = faster_rcnn.FastRCNNPredictor(in_features_box, num_classes)
+
+    for param in model.roi_heads.parameters():   # Ensures ROI Head is not frozen 
+        param.requires_grad = True
 
     model.to(DEVICE)
 
