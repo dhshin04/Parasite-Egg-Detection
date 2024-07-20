@@ -4,6 +4,7 @@ from torch.utils.data import Dataset
 from torchvision.io import read_image
 from torchvision import tv_tensors
 from torchvision.transforms.v2 import functional as F
+import numpy as np
 
 
 # Normalize TV Tensor Image to become float tensor with range [0, 1]
@@ -29,6 +30,13 @@ class FecalEggDataset(Dataset):
         image_name = self.images[idx]
         annotation = self.annotations[image_name]   # Annotation for Image
 
+        # Handle empty list (no object in image)
+        if len(annotation['boxes']) == 0:
+            annotation['boxes'] = np.zeros((0, 4))      # Faster RCNN requires [N, 4] tensor
+            annotation['labels'] = np.zeros((0,))       # Faster RCNN requires [N] tensor
+            if 'area' in annotation:
+                annotation['area'] = np.zeros((0,))         # Faster RCNN requires [N] tensor
+
         # Data Augmentation
         if self.transforms is not None:
             image, annotation = self.transforms(image, annotation)
@@ -49,7 +57,8 @@ class FecalEggDataset(Dataset):
             canvas_size=F.get_size(image)
         )
         target['labels'] = torch.tensor(annotation['labels'], dtype=torch.int64)
-        target['area'] = torch.tensor(annotation['area'], dtype=torch.float32)
+        if 'area' in annotation:
+            target['area'] = torch.tensor(annotation['area'], dtype=torch.float32)
         target['image_id'] = annotation['image_id']       # NOT tensor!
         target['iscrowd'] = iscrowd
 

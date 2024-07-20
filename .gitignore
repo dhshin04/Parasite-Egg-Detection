@@ -1,17 +1,18 @@
 # Ignore PyCache
-__pycache__/
-data/__pycache__/
+parasite_egg_detection/__pycache__/
+parasite_egg_detection/data/__pycache__/
 
 # Added requirements.txt instead
 .venv/
 
 # Ignore general and strongylid datasets and test
-data/general_dataset/images/
-data/general_test/images/
-data/strongylid_dataset/images/
+parasite_egg_detection/data/general_dataset/images/
+parasite_egg_detection/data/general_test/images/
+parasite_egg_detection/data/strongylid_dataset/images/
+parasite_egg_detection/data/strongylid_dataset/xml_annotations/
 
 # Ignore SAM Model parameters -> downloadable online
-data/content/
+parasite_egg_detection/data/content/
 
 # Ignore custom trained model parameters due to GitHub memory constraint
-saved_models/
+parasite_egg_detection/saved_models/
