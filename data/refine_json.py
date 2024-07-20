@@ -1,4 +1,4 @@
-# Takes raw JSON file and change into JSON annotation usuable by torchvision's model
+# Takes COCO-format JSON file and change into JSON annotation usuable by torchvision's model
 
 import os
 import json
