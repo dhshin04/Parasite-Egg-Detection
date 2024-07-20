@@ -1,1 +1,1 @@
-# Flask server should call this package
+# Package containing parasite egg detection model
