@@ -19,15 +19,20 @@ def retrieve_data_path(data_type=None):
     Retrieve path to dataset
 
     Arguments:
-        data_type (str): general or strongylid
+        data_type (str): general (None, default) or strongylid
     '''
     if data_type == 'strongylid':
-        pass
-    dataset_path = os.path.join(os.path.dirname(__file__), 'data', 'general_dataset')
-    images_path = os.path.join(dataset_path, 'images')
-    labels_path = os.path.join(dataset_path, 'refined_labels.json')
-    with open(labels_path, 'r') as refined_labels:
-        annotations = json.load(refined_labels)
+        dataset_path = os.path.join(os.path.dirname(__file__), 'data', 'strongylid_dataset')
+        images_path = os.path.join(dataset_path, 'images')
+        labels_path = os.path.join(dataset_path, 'labels.json')
+        with open(labels_path, 'r') as labels:
+            annotations = json.load(labels)
+    else:
+        dataset_path = os.path.join(os.path.dirname(__file__), 'data', 'general_dataset')
+        images_path = os.path.join(dataset_path, 'images')
+        labels_path = os.path.join(dataset_path, 'refined_labels.json')
+        with open(labels_path, 'r') as refined_labels:
+            annotations = json.load(refined_labels)
     return images_path, annotations
 
 
@@ -38,6 +43,7 @@ def load_datasets(cv_test_split=0.5, device='cpu', data_type=None):
     Arguments:
         cv_test_split (float): Ratio of validation and test set sizes
         device (str): cuda:0 or cpu
+        data_type (str): general (None, default) or strongylid
     Returns:
         (tuple): training set, validation set, test set in FecalEggDataset format
     '''
@@ -45,13 +51,20 @@ def load_datasets(cv_test_split=0.5, device='cpu', data_type=None):
     # Load Image and Annotations
     images_path, annotations = retrieve_data_path(data_type)
 
-    # Prepare list of image names -> used by dataset and data loader
-    train_images, test_images = even_train_test_split(
-        sorted(os.listdir(images_path)),
-        annotations=annotations,
-        test_size=0.4,
-        random_seed=10,
-    )
+    if data_type == 'strongylid':
+        train_images, test_images = train_test_split(
+            sorted(os.listdir(images_path)),       # images from test set
+            test_size=0.4,      # 50:50 split by default
+            random_state=10,     # for consistent results
+        )
+    else:
+        # Prepare list of image names -> used by dataset and data loader
+        train_images, test_images = even_train_test_split(
+            sorted(os.listdir(images_path)),
+            annotations=annotations,
+            test_size=0.4,
+            random_seed=10,
+        )
         
     cv_images, test_images = train_test_split(
         test_images,       # images from test set
@@ -77,6 +90,7 @@ def get_data_loaders(cv_test_split=0.5, train_batch=8, cv_batch=8, test_batch=8,
         cv_batch (int): Batch size for validation loader
         test_batch (int): Batch size for test loader
         device (str): cuda:0 or cpu
+        data_type (str): general (None, default) or strongylid
     Returns:
         (tuple): Data Loaders for training, validation, and test sets
     '''

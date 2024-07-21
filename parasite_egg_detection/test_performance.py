@@ -5,15 +5,32 @@ import time
 import torch
 from torchvision.models.detection import fasterrcnn_mobilenet_v3_large_fpn, faster_rcnn
 from torchmetrics.detection.mean_ap import MeanAveragePrecision
+from torchvision import tv_tensors
+from torchvision.transforms.v2 import functional as F
+import numpy as np
 
 import load_data
 from evaluate import evaluate
-from general_model import export_hyperparameters
+from predict import non_maximum_suppresion
+# from general_model import export_hyperparameters
 
 DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
+# Hyperparameters for Inference
+iou_threshold = 0.5
+confidence_threshold = 0.3
+nms_threshold = 0.3
 
-def test_performance(model, data_loader, iou_threshold, confidence_threshold):
+
+def pred_to_tensor(prediction):
+    prediction['boxes'] = torch.tensor(prediction['boxes'], dtype=torch.float32)
+    prediction['labels'] = torch.tensor(prediction['labels'], dtype=torch.int64)
+    prediction['scores'] = torch.tensor(prediction['scores'], dtype=torch.float32)
+
+    return prediction
+
+
+def test_performance(model, data_loader, iou_threshold, confidence_threshold, nms_threshold=0.5):
     '''
     Evaluate model's precision, recall, and mean average precision metrics
 
@@ -37,6 +54,10 @@ def test_performance(model, data_loader, iou_threshold, confidence_threshold):
             x_test = [image.to(DEVICE) for image in x_test]
             y_test = [{k: (v.to(DEVICE) if torch.is_tensor(v) else v) for k, v in target.items()} for target in y_test]
             predictions = model(x_test)
+            for i in range(len(predictions)):
+                predictions[i] = non_maximum_suppresion(predictions[i], threshold=nms_threshold)
+                predictions[i] = pred_to_tensor(predictions[i])
+                # print(predictions[i])
 
             # Custom Precision and Recall
             precision, recall = evaluate(predictions, y_test, iou_threshold, confidence_threshold)
@@ -81,18 +102,13 @@ def main():
         cv_batch=8,
         test_batch=8,
         device=DEVICE,
-        data_type='general',
+        data_type='strongylid',
     )
-
-    # Load Hyperparameters
-    iou_threshold, confidence_threshold = export_hyperparameters()
-    # iou_threshold = 0.75
-    # confidence_threshold = 0.75
 
     # Load Pre-trained Mask R-CNN Model with Custom-Trained Parameters
     model = fasterrcnn_mobilenet_v3_large_fpn(weights=None)
 
-    model_version = 'general_model_weights.pth'
+    model_version = 'fec_model_weights.pth'
     checkpoint_path = os.path.join(os.path.dirname(__file__), 'saved_models', model_version)
     checkpoint = torch.load(checkpoint_path, map_location=DEVICE)
 
@@ -105,10 +121,10 @@ def main():
     model.to(DEVICE)
 
     print('Validation Performance')
-    test_performance(model, validation_loader, iou_threshold, confidence_threshold)
+    test_performance(model, validation_loader, iou_threshold, confidence_threshold, nms_threshold)
 
     print('\nTest Performance')
-    test_performance(model, test_loader, iou_threshold, confidence_threshold)
+    test_performance(model, test_loader, iou_threshold, confidence_threshold, nms_threshold)
 
 
 if __name__ == '__main__':

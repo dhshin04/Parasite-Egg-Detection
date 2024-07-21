@@ -19,8 +19,8 @@ DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 train_batch = 2                 # Train Loader Batch Size
 cv_batch = 8                    # Validation Loader Batch Size
 accumulation_size = 1           # For Gradient Accumulation
-learning_rate = 1e-4            # For Training
-epochs = 20                     # For Training
+learning_rate = 1e-4            # For Training - best: 1e-4
+epochs = 50                     # For Training
 warmup_step = 10                # For LambdaLR Warmup
 weight_decay = 0.0005           # For AdamW 
 T_max = epochs                  # For CosineAnnealingLR
@@ -65,18 +65,26 @@ def main():
     model.load_state_dict(checkpoint['model_state_dict'])
 
     # Fine-Tune Model
-    for param in model.backbone.parameters():    # Freeze MobileNet & FPN networks
-        param.requires_grad = False
+    #for param in model.backbone.parameters():    # Freeze MobileNet & FPN networks
+    #    param.requires_grad = False
+    
+    for name, param in model.backbone.named_parameters():
+        if 'layer4' in name:
+            param.requires_grad = True
+            break
+        else:
+            param.requires_grad = False
+    print(model)
     
     for param in model.rpn.parameters():         # Freeze RPN network
-        param.requires_grad = False
-
+        param.requires_grad = True
+        
     in_features_box = model.roi_heads.box_predictor.cls_score.in_features
     num_classes = 2     # Binary Classification: Strongylid eggs present or not
     model.roi_heads.box_predictor = faster_rcnn.FastRCNNPredictor(in_features_box, num_classes)
 
-    for param in model.roi_heads.parameters():   # Ensures ROI Head is not frozen 
-        param.requires_grad = True
+    # for param in model.roi_heads.parameters():   # Ensures ROI Head is not frozen 
+    #     param.requires_grad = True
 
     model.to(DEVICE)
 
@@ -110,7 +118,7 @@ def main():
     )
 
     # Save Model
-    checkpoint_path = os.path.join(os.path.dirname(__file__), 'saved_models', 'general_model_weights.pth')
+    checkpoint_path = os.path.join(os.path.dirname(__file__), 'saved_models', 'fec_model_weights.pth')
     torch.save({
         'model_type': 'fasterrcnn_mobilenet_v3_large_fpn',
         'model_state_dict': model.state_dict(),

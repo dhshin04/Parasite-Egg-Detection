@@ -30,16 +30,16 @@ class FecalEggDataset(Dataset):
         image_name = self.images[idx]
         annotation = self.annotations[image_name]   # Annotation for Image
 
+        # Data Augmentation
+        if self.transforms is not None:
+            image, annotation = self.transforms(image, annotation)
+
         # Handle empty list (no object in image)
-        if len(annotation['boxes']) == 0:
+        if not annotation['boxes']:
             annotation['boxes'] = np.zeros((0, 4))      # Faster RCNN requires [N, 4] tensor
             annotation['labels'] = np.zeros((0,))       # Faster RCNN requires [N] tensor
             if 'area' in annotation:
                 annotation['area'] = np.zeros((0,))         # Faster RCNN requires [N] tensor
-
-        # Data Augmentation
-        if self.transforms is not None:
-            image, annotation = self.transforms(image, annotation)
 
         # None of the masks are crowds (only contain single instances)
         num_bbox = len(annotation['boxes'])
@@ -63,6 +63,6 @@ class FecalEggDataset(Dataset):
         target['iscrowd'] = iscrowd
 
         return image, target
-
+        
     def __len__(self):
         return len(self.images)
