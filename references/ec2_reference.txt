@@ -1,0 +1,6 @@
+# Login to ec2 instance
+ssh -i pem_file.pem ubuntu@ip_address
+
+# Launch NGC docker image & copy contents of ec2 to docker image
+docker run --gpus all --shm-size=10g -it --rm -v /home/ubuntu/:/workspace/directory_name/ nvcr.io/nvidia/pytorch:24.06-py3
+cd directory_name

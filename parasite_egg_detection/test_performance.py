@@ -12,20 +12,19 @@ import numpy as np
 import load_data
 from evaluate import evaluate
 from predict import non_maximum_suppresion
-# from general_model import export_hyperparameters
 
 DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 # Hyperparameters for Inference
 iou_threshold = 0.5
 confidence_threshold = 0.3
-nms_threshold = 0.3
+nms_threshold = 0.25
 
 
 def pred_to_tensor(prediction):
-    prediction['boxes'] = torch.tensor(prediction['boxes'], dtype=torch.float32)
-    prediction['labels'] = torch.tensor(prediction['labels'], dtype=torch.int64)
-    prediction['scores'] = torch.tensor(prediction['scores'], dtype=torch.float32)
+    prediction['boxes'] = torch.tensor(prediction['boxes'], dtype=torch.float32).to(DEVICE)
+    prediction['labels'] = torch.tensor(prediction['labels'], dtype=torch.int64).to(DEVICE)
+    prediction['scores'] = torch.tensor(prediction['scores'], dtype=torch.float32).to(DEVICE)
 
     return prediction
 

@@ -19,7 +19,7 @@ DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 
 # Hyperparameter for Inference
-confidence_threshold = 0.3
+confidence_threshold = 0.5
 nms_threshold = 0.3
 
 
@@ -197,9 +197,9 @@ if __name__ == '__main__':
     '''
 
     image_path = os.path.join(os.path.dirname(__file__), 'data', 'strongylid_dataset', 'images', 'medium_test_jpeg.rf.dd61f305837bafdf4cbc905301319dfc.jpg')
-    fec = predict(image_path)
+    fec = predict(image_path, parasite='strongylid')
     print(f'\nFEC: {fec}')
 
-    image_path = os.path.join(os.path.dirname(__file__), 'images.jpg')
-    fec = predict(image_path)
+    image_path = os.path.join(os.path.dirname(__file__), 'data', 'general_test', 'images', 'Trichuris trichiura_0512.jpg')
+    fec = predict(image_path, parasite='strongylid')
     print(f'\nFEC: {fec}')

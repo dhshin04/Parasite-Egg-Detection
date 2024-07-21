@@ -23,16 +23,27 @@ def train_model(model, device, train_loader, validation_loader, accumulation_siz
             x = [image.to(device) for image in x]
             y = [{k: (v.to(device) if torch.is_tensor(v) else v) for k, v in target.items()} for target in y]
             
-            with torch.autocast(device_type='cuda', dtype=torch.float16):   # Mixed Precision
-                losses = model(x, y)        # Returns dictionary of losses
-                loss = sum([loss for loss in losses.values()]) / accumulation_size      # Total loss = sum of all losses; normalize
+            if scaler is not None:
+                with torch.autocast(device_type='cuda', dtype=torch.float16):   # Mixed Precision
+                    losses = model(x, y)        # Returns dictionary of losses
+                    loss = sum([loss for loss in losses.values()]) / accumulation_size      # Total loss = sum of all losses; normalize
+            else:
+                losses = model(x, y)
+                loss = sum([loss for loss in losses.values()]) / accumulation_size
+            
             train_loss_list.append(loss.data.item())
             
-            scaler.scale(loss).backward()         # Compute gradient of loss
+            if scaler is not None:
+                scaler.scale(loss).backward()         # Compute gradient of loss
+            else:
+                loss.backward()
 
             if (batch_index + 1) % accumulation_size == 0 or (batch_index + 1) == len(train_loader):    # Gradient Accumulation (if applicable)
-                scaler.step(optimizer)     # Update parameters
-                scaler.update()
+                if scaler is not None:
+                    scaler.step(optimizer)     # Update parameters
+                    scaler.update()
+                else:
+                    optimizer.step()
                 optimizer.zero_grad()      # clear old gradient before new gradient calculation
             
         # Validation Loss

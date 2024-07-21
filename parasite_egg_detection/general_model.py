@@ -78,7 +78,10 @@ def main():
     cos_scheduler = CosineAnnealingLR(optimizer, T_max=T_max, eta_min=eta_min)   # LR Scheduler to Complement AdamW
     scheduler = SequentialLR(optimizer, schedulers=[warmup_scheduler, cos_scheduler], milestones=[warmup_step])
     
-    scaler = GradScaler()   # Mixed Precision for faster training
+    if torch.cuda.is_available():
+        scaler = GradScaler()   # Mixed Precision for faster training
+    else:
+        scaler = None
 
     # Train and Evaluate Model
     train_model(        # Stored in train.py

@@ -65,26 +65,9 @@ def main():
     model.load_state_dict(checkpoint['model_state_dict'])
 
     # Fine-Tune Model
-    #for param in model.backbone.parameters():    # Freeze MobileNet & FPN networks
-    #    param.requires_grad = False
-    
-    for name, param in model.backbone.named_parameters():
-        if 'layer4' in name:
-            param.requires_grad = True
-            break
-        else:
-            param.requires_grad = False
-    print(model)
-    
-    for param in model.rpn.parameters():         # Freeze RPN network
-        param.requires_grad = True
-        
     in_features_box = model.roi_heads.box_predictor.cls_score.in_features
     num_classes = 2     # Binary Classification: Strongylid eggs present or not
     model.roi_heads.box_predictor = faster_rcnn.FastRCNNPredictor(in_features_box, num_classes)
-
-    # for param in model.roi_heads.parameters():   # Ensures ROI Head is not frozen 
-    #     param.requires_grad = True
 
     model.to(DEVICE)
 
@@ -100,7 +83,10 @@ def main():
     cos_scheduler = CosineAnnealingLR(optimizer, T_max=T_max, eta_min=eta_min)   # LR Scheduler to Complement AdamW
     scheduler = SequentialLR(optimizer, schedulers=[warmup_scheduler, cos_scheduler], milestones=[warmup_step])
     
-    scaler = GradScaler()   # Mixed Precision for faster training
+    if torch.cuda.is_available():
+        scaler = GradScaler()   # Mixed Precision for faster training
+    else:
+        scaler = None
 
     # Train and Evaluate Model
     train_model(        # Stored in train.py
