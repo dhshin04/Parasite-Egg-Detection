@@ -1,8 +1,16 @@
-general_images/ has images of general strongylid eggs (ones that are not necessarily hookworms)
+general_images/ contains training set of general strongylid eggs (ones that are not necessarily hookworms)
 
-images/ has random set of images used by DataLoaders (often combination of general images, hookworms
-    images, and/or images of non-strongylid eggs)
+general_test_images/ contains test set for general strongylid eggs
+
+images/ has random set of training set images used by DataLoaders (combination of general images and hookworms
+    images, selected from first half of hookworm list in general dataset to avoid data leakage)
+
+test_images/ has random set of test set images used by DataLoaders (combination of general images and hookworms
+    images, selected from second half of hookworm list in general dataset to avoid data leakage)
 
 xml_annotations/ has annotations for general strongylid eggs (bounding boxes and associated image name)
+    for both training and test sets (used to import annotations to labels.json and test_labels.json)
 
-labels.json has annotations for all images in images folder
+labels.json has annotations for all training set images in images folder
+
+test_labels.json has annotations for all test set images in test_images folder
