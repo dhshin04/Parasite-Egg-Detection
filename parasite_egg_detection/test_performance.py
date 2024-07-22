@@ -15,18 +15,63 @@ from predict import non_maximum_suppresion
 
 DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-# Hyperparameters for Inference
+# Hyperparameter Tuning for Inference
 iou_threshold = 0.5
-confidence_threshold = 0.3
-nms_threshold = 0.25
+confidence_threshold = 0.3      # Best: 0.6 for fec_model_weights, 0.3 for fec_model_weights_pre
+nms_threshold = 0.3
 
 
 def pred_to_tensor(prediction):
+    # Convert a non-tensor dict prediction to tensor dict
+
     prediction['boxes'] = torch.tensor(prediction['boxes'], dtype=torch.float32).to(DEVICE)
     prediction['labels'] = torch.tensor(prediction['labels'], dtype=torch.int64).to(DEVICE)
     prediction['scores'] = torch.tensor(prediction['scores'], dtype=torch.float32).to(DEVICE)
 
     return prediction
+
+
+def without_low_confidence(prediction):
+    # Fecal Egg Count without Low Confidence Predictions
+
+    total_fec = len(prediction['boxes'])
+    scores = prediction['scores']
+
+    for score in scores:
+        # Handle both low confidence
+        if score < confidence_threshold:
+            total_fec -= 1
+    
+    return total_fec
+
+
+def test_fec_accuracy(predictions, targets):
+    # FEC Accuracy using Percent Error - return average accuracy across prediction batch
+    
+    if len(predictions) == 0:       # Handle empty predictions
+        print('Given predictions dictionary is empty')
+        return -1
+
+    avg_accuracy = 0.       # Average accuracy in prediction batch
+
+    for prediction, target in zip(predictions, targets):
+        actual_fec = without_low_confidence(prediction)
+        expected_fec = len(target['boxes'])
+
+        if expected_fec == 0:       # No object in image
+            if actual_fec == 0:
+                accuracy = 1.
+            else:
+                accuracy = 0.
+        else:       # There is object in image
+            # Accuracy = 1 - percent error
+            accuracy = 1 - abs(actual_fec - expected_fec) / expected_fec
+            if accuracy < 0:    # Handle potential negative cases
+                accuracy = 0.
+        avg_accuracy += accuracy
+
+    avg_accuracy /= len(predictions)
+    return avg_accuracy
 
 
 def test_performance(model, data_loader, iou_threshold, confidence_threshold, nms_threshold=0.5):
@@ -45,6 +90,7 @@ def test_performance(model, data_loader, iou_threshold, confidence_threshold, nm
 
         avg_precision = 0.
         avg_recall = 0.
+        avg_accuracy = 0.
         num_batch = 0
 
         start = time.time()
@@ -56,12 +102,18 @@ def test_performance(model, data_loader, iou_threshold, confidence_threshold, nm
             for i in range(len(predictions)):
                 predictions[i] = non_maximum_suppresion(predictions[i], threshold=nms_threshold)
                 predictions[i] = pred_to_tensor(predictions[i])
-                # print(predictions[i])
+
+            # Handle potential faulty predictions that have label of 0 (0 is only for background)
+            for prediction in predictions:
+                for label in prediction['labels']:
+                    if label.item() == 0:
+                        raise ValueError('Label cannot be 0')
 
             # Custom Precision and Recall
             precision, recall = evaluate(predictions, y_test, iou_threshold, confidence_threshold)
             avg_precision += precision
             avg_recall += recall
+            avg_accuracy += test_fec_accuracy(predictions, y_test)
             num_batch += 1
 
             # mAP
@@ -84,9 +136,11 @@ def test_performance(model, data_loader, iou_threshold, confidence_threshold, nm
 
         avg_precision /= num_batch
         avg_recall /= num_batch
+        avg_accuracy /= num_batch
         end = time.time()
 
-        print(f'Precision: {avg_precision:.4f}, Recall: {avg_recall:.4f}, Elapsed Time: {end - start:.2f}s\n')
+        print(f'Precision: {avg_precision:.4f}, Recall: {avg_recall:.4f}, Elapsed Time: {end - start:.2f}s')
+        print(f'Fecal Egg Count Accuracy: {avg_accuracy * 100:.2f}%\n')
 
         results = metric.compute()
         print('mAP Results:')
@@ -107,7 +161,7 @@ def main():
     # Load Pre-trained Mask R-CNN Model with Custom-Trained Parameters
     model = fasterrcnn_mobilenet_v3_large_fpn(weights=None)
 
-    model_version = 'fec_model_weights.pth'
+    model_version = 'fec_model_weights_pre.pth'
     checkpoint_path = os.path.join(os.path.dirname(__file__), 'saved_models', model_version)
     checkpoint = torch.load(checkpoint_path, map_location=DEVICE)
 

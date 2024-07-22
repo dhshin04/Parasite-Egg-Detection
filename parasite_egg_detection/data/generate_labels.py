@@ -142,12 +142,8 @@ def import_hookworms(json_path, old_images_path, new_images_path, annotations_pa
             next_image_id += 1
 
 
-def main():
-    dataset_path = os.path.join(os.path.dirname(__file__), 'strongylid_dataset')
-    json_path = os.path.join(dataset_path, 'labels.json')
-    general_images_path = os.path.join(dataset_path, 'general_images')
-    images_path = os.path.join(dataset_path, 'images')
-    xml_path = os.path.join(dataset_path, 'xml_annotations')
+def import_new_images(images_path, general_images_path):
+    # Import new set of images from hookworm egg images and general strongylid egg images
 
     # Delete existing files in images directory to avoid conflicts
     files = glob.glob(os.path.join(images_path, '*'))
@@ -164,6 +160,36 @@ def main():
             os.path.join(general_images_path, image_name),
             os.path.join(images_path, image_name),
         )
+
+
+def import_saved_images(images_path, saved_images_path):
+    '''
+    Import images in saved_images path to images_path
+    
+    Arguments:
+        images_path (str): Path to images folder, which is accessed by DataLoader
+        saved_images_path (str): Path to images that were used to train strongylid model
+    '''
+
+    # Delete existing files in images directory to avoid conflicts
+    files = glob.glob(os.path.join(images_path, '*'))
+    for file in files:
+        try:
+            os.remove(file)
+        except:
+            raise Exception('Failed to delete image in images folder')
+
+    # Import general strongylid egg images
+    saved_images = sorted(os.listdir(saved_images_path))
+    for image_name in saved_images:
+        add_image(
+            os.path.join(saved_images_path, image_name),
+            os.path.join(images_path, image_name),
+        )
+
+
+def import_new_annotations(json_path, images_path, xml_path):
+    # Import annotations for new set of images
 
     # Import general strongylid egg annotations
     next_image_id = generate_empty_labels(json_path, images_path)   # likely 120 images
@@ -184,6 +210,40 @@ def main():
         num_imports=num_imports, 
         no_egg_imports=no_egg_imports,
     )
+
+
+def import_saved_annotations(saved_json_path, json_path):
+    # Import data from saved_json_path to json_path
+
+    with open(saved_json_path, 'r') as saved_json:
+        saved_labels = json.load(saved_json)
+    
+    with open(json_path, 'w') as json_file:
+        json_file.write(        # Make JSON File with Formatting
+            json.dumps(saved_labels, indent=4)
+        )
+
+
+def main():
+    dataset_path = os.path.join(os.path.dirname(__file__), 'strongylid_dataset')
+    json_path = os.path.join(dataset_path, 'labels.json')
+    general_images_path = os.path.join(dataset_path, 'general_images')
+    images_path = os.path.join(dataset_path, 'images')
+    saved_images_path = os.path.join(dataset_path, 'saved_images')
+    xml_path = os.path.join(dataset_path, 'xml_annotations')
+
+    # Import new set of images
+    # import_new_images(images_path, general_images_path)
+
+    # Import annotations for new set of images
+    # import_new_annotations(json_path, images_path, xml_path)
+    
+    # Import saved images
+    import_saved_images(images_path, saved_images_path)
+
+    # Import saved labels
+    saved_json_path = os.path.join(dataset_path, 'saved_labels.json')
+    import_saved_annotations(saved_json_path, json_path)
 
 
 if __name__ == '__main__':

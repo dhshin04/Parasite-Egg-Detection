@@ -19,7 +19,7 @@ DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 
 # Hyperparameter for Inference
-confidence_threshold = 0.5
+confidence_threshold = 0.6
 nms_threshold = 0.3
 
 
@@ -120,24 +120,17 @@ def plot_image_with_bbox(image, annotation):
     plt.show()
 
 
-def predict(image_path, parasite=None):
+def make_predictions(images, parasite=None):
     '''
-    Make object detection inference when given image
+    Make object detection inferences when given images tensor
 
     Arguments:
-        image_path (str): Path to image
+        images (str): Images tensor
         parasite (str): 'general'/None for general model (default) 
                         or 'strongylid' for strongylid model
     Returns:
-        fec (int): Fecal Egg Count for Image
+        fec (int): Fecal Egg Count for Image (or average if multiple images provided)
     '''
-
-    # Preprocess Image
-    to_tensor = transforms.ToTensor()
-    image = Image.open(image_path).convert('RGB')   # handle grayscale or RGBA image inputted
-    image = to_tensor(image)
-    image = normalize(image)
-    image = image.unsqueeze(0)     # model requires list of images
 
     # Load Pre-trained Mask R-CNN Model with Custom-Trained Parameters
     if parasite == 'strongylid':
@@ -159,16 +152,50 @@ def predict(image_path, parasite=None):
     # Make Inference
     model.eval()                # Eval Mode: requires_grad=False, Batch Norm off
     with torch.no_grad():
-        image = image.to(DEVICE)
-        predictions = model(image)
-        for img, prediction in zip(image, predictions):
+        images = images.to(DEVICE)
+        predictions = model(images)
+        avg_fec = 0.
+        num_img = 0
+        for img, prediction in zip(images, predictions):
             # Post-Process Output
             prediction = filter(prediction, confidence_threshold)
             prediction = non_maximum_suppresion(prediction, threshold=nms_threshold)
             
-            fec = len(prediction['boxes'])
             plot_image_with_bbox(img, prediction)
-    return fec
+
+            fec = len(prediction['boxes'])
+            avg_fec += fec
+            num_img += 1
+        avg_fec /= num_img
+    return avg_fec
+
+
+def predict(image_paths, parasite='general'):
+    '''
+    Make object detection inferences, given list of image paths
+
+    Arguments:
+        image_paths: List of image paths
+        parasite (str): 'general'/None for general model (default) 
+                        or 'strongylid' for strongylid model
+    Returns:
+        (tuple): Fecal Egg Count and Eggs per Gram for image (or average fec for multiple images)
+    '''
+
+    to_tensor = transforms.ToTensor()
+    images = []
+    for image_path in image_paths:
+        # Preprocess Image - same process as FecalEggDataset to ensure consistency
+        image = Image.open(image_path).convert('RGB')   # handle grayscale or RGBA image inputted
+        image = to_tensor(image)
+        image = normalize(image)
+        images.append(image)
+    images = torch.stack(images)
+
+    fec = make_predictions(images, parasite)
+    epg = fec * 50
+
+    return fec, epg
 
 
 if __name__ == '__main__':
@@ -187,6 +214,7 @@ if __name__ == '__main__':
     image_path = os.path.join(training_images_path, image_name)
 
     '''
+    # For General Model Predictions
     annotation = train_annotations[image_name]
     print(f'Correct Category: {annotation["labels"]}')
     print(f'Correct FEC: {len(annotation["boxes"])}')
@@ -196,10 +224,17 @@ if __name__ == '__main__':
     print(f'FEC Prediction: {fec}')
     '''
 
-    image_path = os.path.join(os.path.dirname(__file__), 'data', 'strongylid_dataset', 'images', 'medium_test_jpeg.rf.dd61f305837bafdf4cbc905301319dfc.jpg')
-    fec = predict(image_path, parasite='strongylid')
+    # For Strongylid Model Predictions
+    image_path = os.path.join(os.path.dirname(__file__), 'data', 'strongylid_dataset', 'images', '0028_png.rf.c9c0a9a8621f8a95395fc7609ded53c2.jpg')
+    fec = predict(
+        [image_path], 
+        parasite='strongylid',
+    )
     print(f'\nFEC: {fec}')
 
     image_path = os.path.join(os.path.dirname(__file__), 'data', 'general_test', 'images', 'Trichuris trichiura_0512.jpg')
-    fec = predict(image_path, parasite='strongylid')
+    fec = predict(
+        [image_path], 
+        parasite='strongylid',
+    )
     print(f'\nFEC: {fec}')
