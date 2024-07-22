@@ -4,7 +4,10 @@ import os
 from parasite_egg_detection.predict import predict
 import random
 
-image1_path = os.path.join(os.path.dirname(__file__), 'test3.jpeg')
+# Test Image
+image1_path = os.path.join(os.path.dirname(__file__), 'test.webp')
+
+# Random Test Image from Untrained Set (Validation/Test Set)
 images_path = os.path.join(
     os.path.dirname(__file__), 
     'parasite_egg_detection',
