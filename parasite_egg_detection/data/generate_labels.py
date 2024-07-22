@@ -99,7 +99,7 @@ def add_image(source_path, destination_path):
         shutil.copyfile(source_path, destination_path)
 
 
-def import_hookworms(json_path, old_images_path, new_images_path, annotations_path, next_image_id, num_imports, no_egg_imports, random_seed=1):
+def import_hookworms(json_path, old_images_path, new_images_path, annotations_path, next_image_id, num_imports, random_seed=1, first_half=True):
     '''
     Import hookworm annotations from general dataset since hookworm eggs
     are a type of strongylid eggs. 
@@ -113,31 +113,22 @@ def import_hookworms(json_path, old_images_path, new_images_path, annotations_pa
     random.seed(random_seed)
 
     hookworm_list = []      # List of image names that contain hookworm eggs
-    not_hookworm = []       # List of image names that do NOT contain hookworm eggs
     with open(annotations_path, 'r') as annotations_file:
         annotations = json.load(annotations_file)
         for image_name, annotation in annotations.items():
             if len(annotation['labels']) > 0 and annotation['labels'][0] == hookworm_category:
                 hookworm_list.append(image_name)
-            else:
-                not_hookworm.append(image_name)
 
         # Sample num_imports hookworm image-annotation pair from hookworm_list
+        if first_half:
+            hookworm_list = hookworm_list[:(len(hookworm_list) // 2)]
+        else:
+            hookworm_list = hookworm_list[(len(hookworm_list) // 2):]
         hookworm_sample = random.sample(hookworm_list, num_imports)
         for image_name in hookworm_sample:
             annotation = annotations[image_name]
             new_labels = [1] * len(annotation['labels'])    # Label replaced with 1 (binary class)
             add_label(json_path, image_name, next_image_id, annotation['boxes'], new_labels)
-            add_image(
-                os.path.join(old_images_path, image_name),
-                os.path.join(new_images_path, image_name),
-            )
-            next_image_id += 1
-        
-        not_hookworm_sample = random.sample(not_hookworm, no_egg_imports)
-        for image_name in not_hookworm_sample:
-            annotation = annotations[image_name]
-            add_label(json_path, image_name, next_image_id, boxes=[], labels=[])
             add_image(
                 os.path.join(old_images_path, image_name),
                 os.path.join(new_images_path, image_name),
@@ -165,7 +156,7 @@ def import_new_images(images_path, general_images_path):
         )
 
 
-def import_new_annotations(json_path, images_path, xml_path):
+def import_new_annotations(json_path, images_path, xml_path, num_imports, first_half=True):
     # Import annotations for new set of images
 
     # Import general strongylid egg annotations
@@ -176,8 +167,6 @@ def import_new_annotations(json_path, images_path, xml_path):
     general_dataset_path = os.path.join(os.path.dirname(__file__), 'general_dataset')
     hookworm_images_path = os.path.join(general_dataset_path, 'images')
     annotations_path = os.path.join(general_dataset_path, 'refined_labels.json')
-    num_imports = 80             # Num Hookworm egg images
-    no_egg_imports = 0           # Num Images without strongylid eggs
     import_hookworms(
         json_path=json_path, 
         old_images_path=hookworm_images_path, 
@@ -185,23 +174,28 @@ def import_new_annotations(json_path, images_path, xml_path):
         annotations_path=annotations_path, 
         next_image_id=next_image_id, 
         num_imports=num_imports, 
-        no_egg_imports=no_egg_imports,
         random_seed=10,
+        first_half=first_half,
     )
 
 
 def main():
     dataset_path = os.path.join(os.path.dirname(__file__), 'strongylid_dataset')
     json_path = os.path.join(dataset_path, 'labels.json')
+    test_json_path = os.path.join(dataset_path, 'test_labels.json')
     general_images_path = os.path.join(dataset_path, 'general_images')
+    general_test_images_path = os.path.join(dataset_path, 'general_test_images')
     images_path = os.path.join(dataset_path, 'images')
+    test_images_path = os.path.join(dataset_path, 'test_images')
     xml_path = os.path.join(dataset_path, 'xml_annotations')
 
-    # Import new set of images
+    # Import training set
     import_new_images(images_path, general_images_path)
+    import_new_annotations(json_path, images_path, xml_path, num_imports=60, first_half=True)
 
-    # Import annotations for new set of images
-    import_new_annotations(json_path, images_path, xml_path)
+    # Import test set
+    import_new_images(test_images_path, general_test_images_path)
+    import_new_annotations(test_json_path, test_images_path, xml_path, num_imports=40, first_half=False)
     
 
 if __name__ == '__main__':

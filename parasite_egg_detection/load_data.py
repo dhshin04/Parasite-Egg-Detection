@@ -24,15 +24,20 @@ def retrieve_data_path(data_type=None):
     if data_type == 'strongylid':
         dataset_path = os.path.join(os.path.dirname(__file__), 'data', 'strongylid_dataset')
         images_path = os.path.join(dataset_path, 'images')
+        test_images_path = os.path.join(dataset_path, 'test_images')
         labels_path = os.path.join(dataset_path, 'labels.json')
+        test_labels_path = os.path.join(dataset_path, 'test_labels.json')
         with open(labels_path, 'r') as labels:
             annotations = json.load(labels)
-    else:
-        dataset_path = os.path.join(os.path.dirname(__file__), 'data', 'general_dataset')
-        images_path = os.path.join(dataset_path, 'images')
-        labels_path = os.path.join(dataset_path, 'refined_labels.json')
-        with open(labels_path, 'r') as refined_labels:
-            annotations = json.load(refined_labels)
+        with open(test_labels_path, 'r') as test_labels:
+            test_annotations = json.load(test_labels)
+        return images_path, test_images_path, annotations, test_annotations
+
+    dataset_path = os.path.join(os.path.dirname(__file__), 'data', 'general_dataset')
+    images_path = os.path.join(dataset_path, 'images')
+    labels_path = os.path.join(dataset_path, 'refined_labels.json')
+    with open(labels_path, 'r') as refined_labels:
+        annotations = json.load(refined_labels)
     return images_path, annotations
 
 
@@ -48,16 +53,13 @@ def load_datasets(cv_test_split=0.5, device='cpu', data_type=None):
         (tuple): training set, validation set, test set in FecalEggDataset format
     '''
 
-    # Load Image and Annotations
-    images_path, annotations = retrieve_data_path(data_type)
-
     if data_type == 'strongylid':
-        train_images, test_images = train_test_split(
-            sorted(os.listdir(images_path)),       # images from test set
-            test_size=0.4,      # 50:50 split by default
-            random_state=10,     # for consistent results
-        )
+        images_path, test_images_path, annotations, test_annotations = retrieve_data_path(data_type)
+        train_images = sorted(os.listdir(images_path))
+        test_images = sorted(os.listdir(test_images_path))
     else:
+        images_path, annotations = retrieve_data_path(data_type)
+
         # Prepare list of image names -> used by dataset and data loader
         train_images, test_images = even_train_test_split(
             sorted(os.listdir(images_path)),
@@ -74,8 +76,13 @@ def load_datasets(cv_test_split=0.5, device='cpu', data_type=None):
 
     # Define Dataset and DataLoader
     train_dataset = FecalEggDataset(images_path, train_images, annotations, device=device, transforms=transform)
-    validation_dataset = FecalEggDataset(images_path, cv_images, annotations, device=device)
-    test_dataset = FecalEggDataset(images_path, test_images, annotations, device=device)
+    
+    if data_type == 'strongylid':
+        validation_dataset = FecalEggDataset(test_images_path, cv_images, test_annotations, device=device)
+        test_dataset = FecalEggDataset(test_images_path, test_images, test_annotations, device=device)
+    else:
+        validation_dataset = FecalEggDataset(images_path, cv_images, annotations, device=device)
+        test_dataset = FecalEggDataset(images_path, test_images, annotations, device=device)
 
     return train_dataset, validation_dataset, test_dataset
 

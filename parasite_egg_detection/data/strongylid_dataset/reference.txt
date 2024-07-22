@@ -3,10 +3,6 @@ general_images/ has images of general strongylid eggs (ones that are not necessa
 images/ has random set of images used by DataLoaders (often combination of general images, hookworms
     images, and/or images of non-strongylid eggs)
 
-saved_images/ has set of random images used during training the model
-
 xml_annotations/ has annotations for general strongylid eggs (bounding boxes and associated image name)
 
 labels.json has annotations for all images in images folder
-
-saved_labels.json has annotations used during training the model

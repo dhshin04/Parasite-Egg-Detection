@@ -15,7 +15,7 @@ DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 # Hyperparameters for Inference
 iou_threshold = 0.5
 confidence_threshold = 0.5      # Best: 0.3 for general, 0.5 for strongylid
-nms_threshold = 0.3
+nms_threshold = 0.25
 
 
 def pred_to_tensor(prediction):
@@ -192,4 +192,4 @@ def main(parasite=None):
 
 
 if __name__ == '__main__':
-    main()
+    main(parasite='strongylid')

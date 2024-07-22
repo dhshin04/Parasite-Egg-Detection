@@ -6,34 +6,33 @@ Data Augmentation used during training: random rotate by 90, random horizontal f
 
 
 Model with General Model Fine-Tuning:
-    Validation Performance
-    Precision: 0.9227, Recall: 0.9739, Elapsed Time: 3.60s
+    Precision: 0.9239, Recall: 0.9739, Elapsed Time: 56.49s
     Fecal Egg Count Accuracy: 95.25%
 
     mAP Results:
-    mAP@0.5: 0.9354
-    mAP@0.5-0.95: 0.5349
+    mAP@0.5: 0.9262
+    mAP@0.5-0.95: 0.5331
 
     Test Performance
-    Precision: 0.9408, Recall: 0.9811, Elapsed Time: 3.67s
-    Fecal Egg Count Accuracy: 95.64%
+    Precision: 0.9416, Recall: 0.9811, Elapsed Time: 101.64s
+    Fecal Egg Count Accuracy: 95.54%
 
     mAP Results:
-    mAP@0.5: 0.9484
-    mAP@0.5-0.95: 0.6614
+    mAP@0.5: 0.9487
+    mAP@0.5-0.95: 0.6616
 
 
 Model without General Model Fine-Tuning:
     Validation Performance
-    Precision: 0.9378, Recall: 0.9776, Elapsed Time: 3.87s
-    Fecal Egg Count Accuracy: 94.63%
+    Precision: 0.9396, Recall: 0.9776, Elapsed Time: 51.20s
+    Fecal Egg Count Accuracy: 94.53%
 
     mAP Results:
-    mAP@0.5: 0.9269
-    mAP@0.5-0.95: 0.5350
+    mAP@0.5: 0.9273
+    mAP@0.5-0.95: 0.5352
 
     Test Performance
-    Precision: 0.9010, Recall: 0.9676, Elapsed Time: 3.86s
+    Precision: 0.9010, Recall: 0.9676, Elapsed Time: 79.27s
     Fecal Egg Count Accuracy: 94.18%
 
     mAP Results:

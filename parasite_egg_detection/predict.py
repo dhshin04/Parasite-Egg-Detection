@@ -1,7 +1,6 @@
 ''' Make FEC Prediction When Given Image '''
 
 import os
-import json
 import torch
 from torchvision.models.detection import fasterrcnn_mobilenet_v3_large_fpn, faster_rcnn
 from torchvision import transforms
@@ -9,12 +8,41 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from PIL import Image
 import numpy as np
-import random
-
-from data.fecal_egg_dataset import normalize
-from evaluate import iou
 
 DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
+
+def iou(box1, box2):
+    '''
+    Copied from evaluate.py instead of importing due to relative import conflicts
+    if predict.py called from file outside parasite_egg_detection folder.
+
+    Arguments:
+        box1 (torch.Tensor): [4] tensor that stores (x1, y1, x2, y2)
+        box2 (torch.Tensor): [4] tensor that stores (x3, y3, x4, y4)
+    Returns:
+        (float): Intersection over Union value for 2 boxes
+    '''
+
+    # Area of Intersection is given as:
+    x1 = box1[0].item(); y1 = box1[1].item(); x2 = box1[2].item(); y2 = box1[3].item()
+    x3 = box2[0].item(); y3 = box2[1].item(); x4 = box2[2].item(); y4 = box2[3].item()
+
+    distance_x = min(x2, x4) - max(x1, x3) + 1  # +1 includes pixel that xn covers
+    distance_y = min(y2, y4) - max(y1, y3) + 1  # +1 includes pixel that yn covers
+    if distance_x <= 0 or distance_y <= 0:      # Indicates no overlaps
+        intersection = 0
+    else:
+        intersection = distance_x * distance_y
+
+    box1_area = (x2 - x1 + 1) * (y2 - y1 + 1)
+    box2_area = (x4 - x3 + 1) * (y4 - y3 + 1)
+    union = box1_area + box2_area - intersection
+
+    if union <= 0:
+        raise Exception('Logical Error: union cannot be 0 by definition as long as boxes have area')
+
+    return intersection / union     # IoU (intersection over union)
 
 
 def filter(prediction, confidence_threshold=0.5):
@@ -108,10 +136,14 @@ def plot_image_with_bbox(image, annotation):
     for box in bboxes:
         # Rectangular patch in COCO format
         patch = patches.Rectangle((box[0], box[1]), box[2] - box[0], box[3] - box[1],
-                              linewidth=2, edgecolor='r', facecolor='none')
+                              linewidth=3, edgecolor='b', facecolor='none')
         ax.add_patch(patch)
-    ax.set_title(f'Category: {annotation["labels"]}')
+    # ax.set_title(f'Category: {annotation["labels"]}')
+    fec = len(annotation['boxes'])
+    ax.set_title(f'Fecal Egg Count: {fec}')
     plt.show()
+
+    return fec
 
 
 def make_predictions(images, parasite=None):
@@ -123,18 +155,19 @@ def make_predictions(images, parasite=None):
         parasite (str): 'general'/None for general model (default) 
                         or 'strongylid' for strongylid model
     Returns:
-        fec (int): Fecal Egg Count for Image (or average if multiple images provided)
+        fec (int): Fecal Egg Count for Image (or average if multiple images provided, 
+                   rounded to nearest integer)
     '''
 
     # Load Pre-trained Mask R-CNN Model with Custom-Trained Parameters
     if parasite == 'strongylid':
-        model_version = 'strongylid_model_weights.pth'
+        model_version = 'strongylid_model2.pth'
         confidence_threshold = 0.5      # best case hyperparams for strongylid model
-        nms_threshold = 0.3
+        nms_threshold = 0.25
     else:
         model_version = 'general_model_weights.pth'
         confidence_threshold = 0.3      # best case hyperparams for general model
-        nms_threshold = 0.3
+        nms_threshold = 0.25
 
     checkpoint_path = os.path.join(os.path.dirname(__file__), 'saved_models', model_version)
     checkpoint = torch.load(checkpoint_path, map_location=DEVICE)
@@ -151,7 +184,6 @@ def make_predictions(images, parasite=None):
     # Make Inference
     model.eval()                # Eval Mode: requires_grad=False, Batch Norm off
     with torch.no_grad():
-        images = images.to(DEVICE)
         predictions = model(images)
         avg_fec = 0.
         num_img = 0
@@ -160,13 +192,13 @@ def make_predictions(images, parasite=None):
             prediction = filter(prediction, confidence_threshold)
             prediction = non_maximum_suppresion(prediction, threshold=nms_threshold)
             
-            plot_image_with_bbox(img, prediction)
+            # TODO: create new image instead of plotting if deploying model using Flask
+            fec = plot_image_with_bbox(img, prediction)
 
-            fec = len(prediction['boxes'])
             avg_fec += fec
             num_img += 1
         avg_fec /= num_img
-    return avg_fec
+    return round(avg_fec)
 
 
 def predict(image_paths, parasite='general'):
@@ -188,9 +220,10 @@ def predict(image_paths, parasite='general'):
         # Preprocess Image - same process as FecalEggDataset to ensure consistency
         image = Image.open(image_path).convert('RGB')   # handle grayscale or RGBA image inputted
         image = to_tensor(image)
-        image = normalize(image)
+        if image.dtype == torch.uint8:      # Normalize image for appropriate model input
+            image = image.float() / 255
+        image = image.to(DEVICE)
         images.append(image)
-    images = torch.stack(images)
 
     fec = make_predictions(images, parasite)
     epg = fec * 50
@@ -200,32 +233,7 @@ def predict(image_paths, parasite='general'):
 
 if __name__ == '__main__':
     # Example Inference Script for Demonstration
-    
-    trainingset_path = os.path.join(os.path.dirname(__file__), 'data', 'general_test')
-    training_images_path = os.path.join(trainingset_path, 'images')
-    training_labels_path = os.path.join(trainingset_path, 'refined_labels.json')
-    with open(training_labels_path, 'r') as refined_labels:
-        train_annotations = json.load(refined_labels)
-
-    train_images = sorted(os.listdir(training_images_path))
-
-    image_idx = random.randint(0, len(train_images) - 1)
-    image_name = train_images[image_idx]
-    image_path = os.path.join(training_images_path, image_name)
-
-    '''
-    # For General Model Predictions
-    annotation = train_annotations[image_name]
-    print(f'Correct Category: {annotation["labels"]}')
-    print(f'Correct FEC: {len(annotation["boxes"])}')
-    print(f'Image ID: {annotation["image_id"]}')
-
-    fec = predict(image_path)
-    print(f'FEC Prediction: {fec}')
-    '''
-
-    # For Strongylid Model Predictions
-    image_path = os.path.join(os.path.dirname(__file__), 'data', 'strongylid_dataset', 'images', '0028_png.rf.c9c0a9a8621f8a95395fc7609ded53c2.jpg')
+    image_path = os.path.join(os.path.dirname(__file__), 'data', 'strongylid_dataset', 'test_images', 'medium_test_jpeg.rf.dd61f305837bafdf4cbc905301319dfc.jpg')
     fec, epg = predict(
         [image_path], 
         parasite='strongylid',
