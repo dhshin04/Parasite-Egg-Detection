@@ -1,0 +1,63 @@
+200 images used for training, validation, and test sets
+    - 80 images were generated using data augmentation techniques, implemented
+      using Roboflow (specifics under .../strongylid_dataset/README.roboflow.txt)
+
+Data Augmentation used during training: random rotate by 90, random horizontal flip
+
+
+Model with General Model Fine-Tuning:
+    Validation Performance
+    Precision: 0.9227, Recall: 0.9739, Elapsed Time: 3.60s
+    Fecal Egg Count Accuracy: 95.25%
+
+    mAP Results:
+    mAP@0.5: 0.9354
+    mAP@0.5-0.95: 0.5349
+
+    Test Performance
+    Precision: 0.9408, Recall: 0.9811, Elapsed Time: 3.67s
+    Fecal Egg Count Accuracy: 95.64%
+
+    mAP Results:
+    mAP@0.5: 0.9484
+    mAP@0.5-0.95: 0.6614
+
+
+Model without General Model Fine-Tuning:
+    Validation Performance
+    Precision: 0.9378, Recall: 0.9776, Elapsed Time: 3.87s
+    Fecal Egg Count Accuracy: 94.63%
+
+    mAP Results:
+    mAP@0.5: 0.9269
+    mAP@0.5-0.95: 0.5350
+
+    Test Performance
+    Precision: 0.9010, Recall: 0.9676, Elapsed Time: 3.86s
+    Fecal Egg Count Accuracy: 94.18%
+
+    mAP Results:
+    mAP@0.5: 0.9787
+    mAP@0.5-0.95: 0.6828
+
+
+Hyperparameters for Training
+    train_batch = 2                 
+    cv_batch = 8                    
+    accumulation_size = 1           
+    learning_rate = 1e-4            
+    epochs = 50                    
+    warmup_step = 10                
+    weight_decay = 0.0005           
+    T_max = epochs                  
+    eta_min = learning_rate / 30  
+
+    AdamW
+    SequentialLR with CosineAnnealingLR + LambdaLR
+    GradScaler()  
+
+
+Hyperparameters for Inference
+    iou_threshold = 0.5
+    confidence_threshold = 0.5      # Best for both strongylid models with and without general model fine-tuning 
+    nms_threshold = 0.3

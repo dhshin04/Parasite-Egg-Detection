@@ -5,9 +5,6 @@ import time
 import torch
 from torchvision.models.detection import fasterrcnn_mobilenet_v3_large_fpn, faster_rcnn
 from torchmetrics.detection.mean_ap import MeanAveragePrecision
-from torchvision import tv_tensors
-from torchvision.transforms.v2 import functional as F
-import numpy as np
 
 import load_data
 from evaluate import evaluate
@@ -15,9 +12,9 @@ from predict import non_maximum_suppresion
 
 DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-# Hyperparameter Tuning for Inference
+# Hyperparameters for Inference
 iou_threshold = 0.5
-confidence_threshold = 0.3      # Best: 0.6 for fec_model_weights, 0.3 for fec_model_weights_pre
+confidence_threshold = 0.5      # Best: 0.3 for general, 0.5 for strongylid
 nms_threshold = 0.3
 
 
@@ -74,7 +71,7 @@ def test_fec_accuracy(predictions, targets):
     return avg_accuracy
 
 
-def test_performance(model, data_loader, iou_threshold, confidence_threshold, nms_threshold=0.5):
+def test_performance(model, data_loader, iou_threshold, confidence_threshold, nms_threshold):
     '''
     Evaluate model's precision, recall, and mean average precision metrics
 
@@ -148,20 +145,34 @@ def test_performance(model, data_loader, iou_threshold, confidence_threshold, nm
         print(f'mAP@0.5-0.95: {results["map"].item():.4f}')
 
 
-def main():
+def main(parasite=None):
+    '''
+    Test model performance (validation and test)
+
+    Arguments:
+        parasite (str): 'general'/None for general model (default) 
+                        or 'strongylid' for strongylid model
+    '''
+
     # Load Test Data For Inference
     _, validation_loader, test_loader = load_data.get_data_loaders(
         cv_test_split=0.5,
         cv_batch=8,
         test_batch=8,
         device=DEVICE,
-        data_type='strongylid',
+        data_type=parasite,
     )
 
     # Load Pre-trained Mask R-CNN Model with Custom-Trained Parameters
     model = fasterrcnn_mobilenet_v3_large_fpn(weights=None)
 
-    model_version = 'fec_model_weights_pre.pth'
+    if parasite == 'strongylid':
+        model_version = 'strongylid_model_weights.pth'
+        confidence_threshold = 0.5
+    else:
+        model_version = 'general_model_weights.pth'
+        confidence_threshold = 0.3
+
     checkpoint_path = os.path.join(os.path.dirname(__file__), 'saved_models', model_version)
     checkpoint = torch.load(checkpoint_path, map_location=DEVICE)
 

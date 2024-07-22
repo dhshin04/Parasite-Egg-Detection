@@ -4,8 +4,7 @@ import os
 import json
 import torch
 from torchvision.models.detection import fasterrcnn_mobilenet_v3_large_fpn, faster_rcnn
-from torchvision.io import read_image
-from torchvision import tv_tensors, transforms
+from torchvision import transforms
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from PIL import Image
@@ -16,11 +15,6 @@ from data.fecal_egg_dataset import normalize
 from evaluate import iou
 
 DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-
-
-# Hyperparameter for Inference
-confidence_threshold = 0.6
-nms_threshold = 0.3
 
 
 def filter(prediction, confidence_threshold=0.5):
@@ -134,9 +128,14 @@ def make_predictions(images, parasite=None):
 
     # Load Pre-trained Mask R-CNN Model with Custom-Trained Parameters
     if parasite == 'strongylid':
-        model_version = 'fec_model_weights.pth'
+        model_version = 'strongylid_model_weights.pth'
+        confidence_threshold = 0.5      # best case hyperparams for strongylid model
+        nms_threshold = 0.3
     else:
         model_version = 'general_model_weights.pth'
+        confidence_threshold = 0.3      # best case hyperparams for general model
+        nms_threshold = 0.3
+
     checkpoint_path = os.path.join(os.path.dirname(__file__), 'saved_models', model_version)
     checkpoint = torch.load(checkpoint_path, map_location=DEVICE)
 
@@ -179,7 +178,8 @@ def predict(image_paths, parasite='general'):
         parasite (str): 'general'/None for general model (default) 
                         or 'strongylid' for strongylid model
     Returns:
-        (tuple): Fecal Egg Count and Eggs per Gram for image (or average fec for multiple images)
+        (tuple): Fecal Egg Count and Eggs per Gram for image 
+                 (or average fec for multiple images)
     '''
 
     to_tensor = transforms.ToTensor()
@@ -226,15 +226,15 @@ if __name__ == '__main__':
 
     # For Strongylid Model Predictions
     image_path = os.path.join(os.path.dirname(__file__), 'data', 'strongylid_dataset', 'images', '0028_png.rf.c9c0a9a8621f8a95395fc7609ded53c2.jpg')
-    fec = predict(
+    fec, epg = predict(
         [image_path], 
         parasite='strongylid',
     )
-    print(f'\nFEC: {fec}')
+    print(f'\nAverage FEC: {fec}, EPG: {epg}')
 
     image_path = os.path.join(os.path.dirname(__file__), 'data', 'general_test', 'images', 'Trichuris trichiura_0512.jpg')
-    fec = predict(
+    fec, epg = predict(
         [image_path], 
         parasite='strongylid',
     )
-    print(f'\nFEC: {fec}')
+    print(f'\nAverage FEC: {fec}, EPG: {epg}')

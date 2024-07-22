@@ -10,7 +10,6 @@ parasite_egg_detection/data/general_dataset/images/
 parasite_egg_detection/data/general_test/images/
 parasite_egg_detection/data/strongylid_dataset/images/
 parasite_egg_detection/data/strongylid_dataset/general_images/
-parasite_egg_detection/data/strongylid_dataset/saved_images/
 parasite_egg_detection/data/strongylid_dataset/xml_annotations/
 
 # Ignore SAM Model parameters -> downloadable online

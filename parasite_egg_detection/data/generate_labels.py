@@ -65,9 +65,10 @@ def import_xml_annotations(json_path, xml_path):
             image_name, bboxes = read_xml(
                 os.path.join(xml_path, xml_file)
             )
-            annotation = annotations[image_name]
-            annotation['boxes'] = bboxes
-            annotation['labels'] = [1] * len(bboxes)    # Labels are all 1 (binary class)
+            if image_name in annotations:       # If corresponding image has been added to images folder
+                annotation = annotations[image_name]
+                annotation['boxes'] = bboxes
+                annotation['labels'] = [1] * len(bboxes)    # Labels are all 1 (binary class)
     
     with open(json_path, 'w') as json_file:
         json_file.write(        # Make JSON File with Formatting
@@ -98,7 +99,7 @@ def add_image(source_path, destination_path):
         shutil.copyfile(source_path, destination_path)
 
 
-def import_hookworms(json_path, old_images_path, new_images_path, annotations_path, next_image_id, num_imports, no_egg_imports):
+def import_hookworms(json_path, old_images_path, new_images_path, annotations_path, next_image_id, num_imports, no_egg_imports, random_seed=1):
     '''
     Import hookworm annotations from general dataset since hookworm eggs
     are a type of strongylid eggs. 
@@ -108,6 +109,8 @@ def import_hookworms(json_path, old_images_path, new_images_path, annotations_pa
         num_imports (int): Number of hookworm egg image-annotation pair to add to json file
         no_hookworm_imports (int): Number of non-hookworm-egg image-annotation pair to add to json file
     '''
+
+    random.seed(random_seed)
 
     hookworm_list = []      # List of image names that contain hookworm eggs
     not_hookworm = []       # List of image names that do NOT contain hookworm eggs
@@ -162,32 +165,6 @@ def import_new_images(images_path, general_images_path):
         )
 
 
-def import_saved_images(images_path, saved_images_path):
-    '''
-    Import images in saved_images path to images_path
-    
-    Arguments:
-        images_path (str): Path to images folder, which is accessed by DataLoader
-        saved_images_path (str): Path to images that were used to train strongylid model
-    '''
-
-    # Delete existing files in images directory to avoid conflicts
-    files = glob.glob(os.path.join(images_path, '*'))
-    for file in files:
-        try:
-            os.remove(file)
-        except:
-            raise Exception('Failed to delete image in images folder')
-
-    # Import general strongylid egg images
-    saved_images = sorted(os.listdir(saved_images_path))
-    for image_name in saved_images:
-        add_image(
-            os.path.join(saved_images_path, image_name),
-            os.path.join(images_path, image_name),
-        )
-
-
 def import_new_annotations(json_path, images_path, xml_path):
     # Import annotations for new set of images
 
@@ -200,7 +177,7 @@ def import_new_annotations(json_path, images_path, xml_path):
     hookworm_images_path = os.path.join(general_dataset_path, 'images')
     annotations_path = os.path.join(general_dataset_path, 'refined_labels.json')
     num_imports = 80             # Num Hookworm egg images
-    no_egg_imports = 50          # Num Images without strongylid eggs
+    no_egg_imports = 0           # Num Images without strongylid eggs
     import_hookworms(
         json_path=json_path, 
         old_images_path=hookworm_images_path, 
@@ -209,19 +186,8 @@ def import_new_annotations(json_path, images_path, xml_path):
         next_image_id=next_image_id, 
         num_imports=num_imports, 
         no_egg_imports=no_egg_imports,
+        random_seed=10,
     )
-
-
-def import_saved_annotations(saved_json_path, json_path):
-    # Import data from saved_json_path to json_path
-
-    with open(saved_json_path, 'r') as saved_json:
-        saved_labels = json.load(saved_json)
-    
-    with open(json_path, 'w') as json_file:
-        json_file.write(        # Make JSON File with Formatting
-            json.dumps(saved_labels, indent=4)
-        )
 
 
 def main():
@@ -229,22 +195,14 @@ def main():
     json_path = os.path.join(dataset_path, 'labels.json')
     general_images_path = os.path.join(dataset_path, 'general_images')
     images_path = os.path.join(dataset_path, 'images')
-    saved_images_path = os.path.join(dataset_path, 'saved_images')
     xml_path = os.path.join(dataset_path, 'xml_annotations')
 
     # Import new set of images
-    # import_new_images(images_path, general_images_path)
+    import_new_images(images_path, general_images_path)
 
     # Import annotations for new set of images
-    # import_new_annotations(json_path, images_path, xml_path)
+    import_new_annotations(json_path, images_path, xml_path)
     
-    # Import saved images
-    import_saved_images(images_path, saved_images_path)
-
-    # Import saved labels
-    saved_json_path = os.path.join(dataset_path, 'saved_labels.json')
-    import_saved_annotations(saved_json_path, json_path)
-
 
 if __name__ == '__main__':
     main()

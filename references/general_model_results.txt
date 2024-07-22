@@ -1,0 +1,39 @@
+2200 images used for training, validation, and test sets
+Data Augmentation used during training: random rotate by 90, random horizontal flip
+
+Results
+    Validation Performance
+    Precision: 0.9182, Recall: 0.9446, Elapsed Time: 28.92s
+
+    mAP Results:
+    mAP@0.5: 0.9382
+    mAP@0.5-0.95: 0.7619
+
+    Test Performance
+    Precision: 0.9205, Recall: 0.9398, Elapsed Time: 23.75s
+
+    mAP Results:
+    mAP@0.5: 0.9372
+    mAP@0.5-0.95: 0.7681
+
+
+Hyperparameters for Training
+    train_batch = 8                 
+    cv_batch = 8                    
+    accumulation_size = 1           
+    learning_rate = 1e-4            
+    epochs = 20                     
+    warmup_step = 10                
+    weight_decay = 0.0005           
+    T_max = epochs                 
+    eta_min = learning_rate / 30   
+
+    AdamW
+    SequentialLR with CosineAnnealingLR + LambdaLR
+    GradScaler()
+
+
+Hyperparameters for Inference
+    iou_threshold = 0.5
+    confidence_threshold = 0.3
+    nms_threshold = 0.3

@@ -15,7 +15,7 @@ torch.manual_seed(1234)
 DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 
-# Hyperparameters
+# Hyperparameters for Training
 train_batch = 2                 # Train Loader Batch Size
 cv_batch = 8                    # Validation Loader Batch Size
 accumulation_size = 1           # For Gradient Accumulation
@@ -104,7 +104,7 @@ def main():
     )
 
     # Save Model
-    checkpoint_path = os.path.join(os.path.dirname(__file__), 'saved_models', 'fec_model_weights.pth')
+    checkpoint_path = os.path.join(os.path.dirname(__file__), 'saved_models', 'strongylid_model_weights.pth')
     torch.save({
         'model_type': 'fasterrcnn_mobilenet_v3_large_fpn',
         'model_state_dict': model.state_dict(),
