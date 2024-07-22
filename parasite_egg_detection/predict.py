@@ -11,6 +11,10 @@ import numpy as np
 
 DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
+# Hyperparameters for Inference (best case for both general and strongylid models)
+confidence_threshold = 0.3
+nms_threshold = 0.3
+
 
 def iou(box1, box2):
     '''
@@ -161,13 +165,10 @@ def make_predictions(images, parasite=None):
 
     # Load Pre-trained Mask R-CNN Model with Custom-Trained Parameters
     if parasite == 'strongylid':
-        model_version = 'strongylid_model2.pth'
-        confidence_threshold = 0.5      # best case hyperparams for strongylid model
-        nms_threshold = 0.25
+        model_version = 'strongylid_model_weights.pth'
+        
     else:
         model_version = 'general_model_weights.pth'
-        confidence_threshold = 0.3      # best case hyperparams for general model
-        nms_threshold = 0.25
 
     checkpoint_path = os.path.join(os.path.dirname(__file__), 'saved_models', model_version)
     checkpoint = torch.load(checkpoint_path, map_location=DEVICE)

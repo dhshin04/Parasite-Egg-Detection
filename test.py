@@ -4,7 +4,7 @@ import os
 from parasite_egg_detection.predict import predict
 import random
 
-image1_path = os.path.join(os.path.dirname(__file__), 'test7.png')
+image1_path = os.path.join(os.path.dirname(__file__), 'test3.jpeg')
 images_path = os.path.join(
     os.path.dirname(__file__), 
     'parasite_egg_detection',
