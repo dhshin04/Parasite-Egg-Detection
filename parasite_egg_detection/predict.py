@@ -120,7 +120,7 @@ def non_maximum_suppresion(prediction, threshold=0.5):
     return new_pred
 
 
-def plot_image_with_bbox(image, annotation):
+def plot_image_with_bbox(image, annotation, parasite=None):
     '''
     Plot image with corresponding bounding boxes
 
@@ -142,9 +142,12 @@ def plot_image_with_bbox(image, annotation):
         patch = patches.Rectangle((box[0], box[1]), box[2] - box[0], box[3] - box[1],
                               linewidth=3, edgecolor='b', facecolor='none')
         ax.add_patch(patch)
-    # ax.set_title(f'Category: {annotation["labels"]}')
+    
     fec = len(annotation['boxes'])
-    ax.set_title(f'Fecal Egg Count: {fec}')
+    if parasite == 'strongylid':
+        ax.set_title(f'Fecal Egg Count: {fec}')
+    else:
+        ax.set_title(f'Category: {annotation["labels"]}')
     plt.show()
 
     return fec
@@ -194,7 +197,7 @@ def make_predictions(images, parasite=None):
             prediction = non_maximum_suppresion(prediction, threshold=nms_threshold)
             
             # TODO: create new image instead of plotting if deploying model using Flask
-            fec = plot_image_with_bbox(img, prediction)
+            fec = plot_image_with_bbox(img, prediction, parasite)
 
             avg_fec += fec
             num_img += 1
