@@ -4,16 +4,17 @@
 
 Data Augmentation used during training: random rotate by 90, random horizontal flip
 
-Overview: The model without general model fine-tuning outperformed the one with general model
-    fine-tuning. However, there is reasonable suspicion that the former model may be more 
-    prone to overfitting, suggested by its unreasonably high accuracy despite a small 
-    training set. By contrast, the latter model displayed slower convergence, likely due to
-    conflicts with features of general fecal eggs learned during fine-tuning, potentially
-    preventing overfitting. It is important to note that this is just a hypothesis, and
-    further research is required using a larger dataset.
+Overview: The model fine-tuned directly on torchvision's pretrained Faster R-CNN
+    outperformed the model tuned on the custom general egg detection model. However, there is
+    reasonable suspicion that the former model may be more prone to overfitting, suggested by
+    its unreasonably high accuracy despite a small training set. By contrast, the latter 
+    model displayed slower convergence, likely due to conflicts with features of general 
+    fecal eggs learned during fine-tuning, potentially preventing overfitting. It is 
+    important to note that this is just a hypothesis, and further research is required 
+    using a larger dataset.
 
 
-Model with General Model Fine-Tuning:
+Model Fine-Tuned on Custom General Egg Detection Model:
     Validation Performance
     Precision: 0.7419, Recall: 0.9744, Elapsed Time: 4.23s
     Fecal Egg Count Accuracy: 73.50%
@@ -33,7 +34,7 @@ Model with General Model Fine-Tuning:
     Average FEC Accuracy on Untrained Data (Validation + Test): 85.877%
 
 
-Model without General Model Fine-Tuning:
+Model Fine-Tuned on torchvision's pretrained Faster R-CNN:
     Validation Performance
     Precision: 0.9240, Recall: 0.9711, Elapsed Time: 4.19s
     Fecal Egg Count Accuracy: 93.13%

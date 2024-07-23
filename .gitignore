@@ -18,4 +18,6 @@ parasite_egg_detection/data/strongylid_dataset/xml_annotations/
 parasite_egg_detection/data/content/
 
 # Ignore custom trained model parameters due to GitHub memory constraint
-parasite_egg_detection/saved_models/
+parasite_egg_detection/saved_models/general_model_weights.pth
+parasite_egg_detection/saved_models/strongylid_model_weights.pth
+parasite_egg_detection/saved_models/strongylid_without_gen.pth

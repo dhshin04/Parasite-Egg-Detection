@@ -1,0 +1,7 @@
+general_model_weights.pth is the model parameters for the custom general egg detection model.
+
+strongylid_model_weights.pth is the model parameters for the strongylid egg detection model
+    fine-tuned on the custom general egg detection model.
+
+strongylid_without_gen.pth is the model parameters for the strongylid egg detection model
+    fine-tuned directly on the pretrained fasterrcnn_mobilenet_v3_large_fpn model.
