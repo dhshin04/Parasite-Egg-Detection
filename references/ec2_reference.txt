@@ -1,3 +1,5 @@
+# Instance used: p3.2xlarge (Nvidia Tesla V100 GPU)
+
 # Login to ec2 instance
 ssh -i pem_file.pem ubuntu@ip_address
 
