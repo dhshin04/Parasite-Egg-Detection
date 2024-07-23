@@ -230,20 +230,3 @@ def predict(image_paths, parasite='general'):
     epg = fec * 50
 
     return fec, epg
-
-
-if __name__ == '__main__':
-    # Example Inference Script for Demonstration
-    image_path = os.path.join(os.path.dirname(__file__), 'data', 'strongylid_dataset', 'test_images', 'medium_test_jpeg.rf.dd61f305837bafdf4cbc905301319dfc.jpg')
-    fec, epg = predict(
-        [image_path], 
-        parasite='strongylid',
-    )
-    print(f'\nAverage FEC: {fec}, EPG: {epg}')
-
-    image_path = os.path.join(os.path.dirname(__file__), 'data', 'general_test', 'images', 'Trichuris trichiura_0512.jpg')
-    fec, epg = predict(
-        [image_path], 
-        parasite='strongylid',
-    )
-    print(f'\nAverage FEC: {fec}, EPG: {epg}')
