@@ -191,11 +191,11 @@ def main():
 
     # Import training set
     import_new_images(images_path, general_images_path)
-    import_new_annotations(json_path, images_path, xml_path, num_imports=60, first_half=True)
+    import_new_annotations(json_path, images_path, xml_path, num_imports=90, first_half=True)
 
     # Import test set
     import_new_images(test_images_path, general_test_images_path)
-    import_new_annotations(test_json_path, test_images_path, xml_path, num_imports=40, first_half=False)
+    import_new_annotations(test_json_path, test_images_path, xml_path, num_imports=36, first_half=False)
     
 
 if __name__ == '__main__':

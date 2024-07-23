@@ -1,5 +1,5 @@
-200 images used for training, validation, and test sets
-    - 80 images were generated using data augmentation techniques, implemented
+200 images used for training, validation, and test sets (150 train, 25 val, 25 test)
+    - 60 training set images were generated using data augmentation techniques, implemented
       using Roboflow (specifics under .../strongylid_dataset/README.roboflow.txt)
 
 Data Augmentation used during training: random rotate by 90, random horizontal flip
@@ -22,7 +22,7 @@ Model with General Model Fine-Tuning:
     mAP@0.5: 0.9302
     mAP@0.5-0.95: 0.6172
 
-    Average FEC on Untrained Data (Validation + Test): 85.875%
+    Average FEC Accuracy on Untrained Data (Validation + Test): 85.877%
 
 
 Model without General Model Fine-Tuning:
@@ -42,7 +42,7 @@ Model without General Model Fine-Tuning:
     mAP@0.5: 0.9415
     mAP@0.5-0.95: 0.6055
 
-    Average FEC on Untrained Data: 94.125%
+    Average FEC Accuracy on Untrained Data (Validation + Test): 94.121%
 
 
 Hyperparameters for Training

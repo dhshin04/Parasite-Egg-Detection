@@ -14,8 +14,8 @@ DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 # Hyperparameters for Inference
 iou_threshold = 0.5
-confidence_threshold = 0.5      # Best: 0.3 for general, 0.5 for strongylid
-nms_threshold = 0.25
+confidence_threshold = 0.3     
+nms_threshold = 0.3
 
 
 def pred_to_tensor(prediction):
@@ -79,6 +79,8 @@ def test_performance(model, data_loader, iou_threshold, confidence_threshold, nm
         data_loader (torch.utils.data.DataLoader): train loader, validation loader, or test loader
         iou_threshold (float): To retrieve precision and recall
         confidence_threshold (float): To retrieve precision and recall
+    Returns:
+        avg_accuracy (float): Average accuracy on specific data loader
     '''
 
     model.eval()                # Eval Mode: requires_grad=False, Batch Norm off
@@ -143,6 +145,8 @@ def test_performance(model, data_loader, iou_threshold, confidence_threshold, nm
         print('mAP Results:')
         print(f'mAP@0.5: {results["map_50"].item():.4f}')
         print(f'mAP@0.5-0.95: {results["map"].item():.4f}')
+    
+    return avg_accuracy
 
 
 def main(parasite=None):
@@ -167,7 +171,7 @@ def main(parasite=None):
     model = fasterrcnn_mobilenet_v3_large_fpn(weights=None)
 
     if parasite == 'strongylid':
-        model_version = 'strongylid_model_weights.pth'
+        model_version = 'strongylid_without_gen.pth'
         confidence_threshold = 0.5
     else:
         model_version = 'general_model_weights.pth'
@@ -185,10 +189,13 @@ def main(parasite=None):
     model.to(DEVICE)
 
     print('Validation Performance')
-    test_performance(model, validation_loader, iou_threshold, confidence_threshold, nms_threshold)
+    val_accuracy = test_performance(model, validation_loader, iou_threshold, confidence_threshold, nms_threshold)
 
     print('\nTest Performance')
-    test_performance(model, test_loader, iou_threshold, confidence_threshold, nms_threshold)
+    test_accuracy = test_performance(model, test_loader, iou_threshold, confidence_threshold, nms_threshold)
+
+    avg_fec = (val_accuracy + test_accuracy) / 2
+    print(f'\nAverage FEC Accuracy on Untrained Data (Validation + Test): {avg_fec * 100:.3f}%')
 
 
 if __name__ == '__main__':
