@@ -4,6 +4,14 @@
 
 Data Augmentation used during training: random rotate by 90, random horizontal flip
 
+Overview: The model without general model fine-tuning outperformed the one with general model
+    fine-tuning. However, there is reasonable suspicion that the former model may be more 
+    prone to overfitting, suggested by its unreasonably high accuracy despite a small 
+    training set. By contrast, the latter model displayed slower convergence, likely due to
+    conflicts with features of general fecal eggs learned during fine-tuning, potentially
+    preventing overfitting. It is important to note that this is just a hypothesis, and
+    further research is required using a larger dataset.
+
 
 Model with General Model Fine-Tuning:
     Validation Performance
