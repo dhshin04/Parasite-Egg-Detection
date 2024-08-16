@@ -1,4 +1,5 @@
 # Ignore PyCache
+__pycache__/
 parasite_egg_detection/__pycache__/
 parasite_egg_detection/data/__pycache__/
 
