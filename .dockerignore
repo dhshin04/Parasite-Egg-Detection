@@ -1,0 +1,10 @@
+# Ignore everything
+*
+
+# Don't ignore the following
+!parasite_egg_detection/saved_models/*
+!parasite_egg_detection/predict.py
+!requirements.txt
+!app.py
+!static/
+!templates/
