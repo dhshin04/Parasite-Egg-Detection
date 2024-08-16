@@ -7,11 +7,6 @@ import cv2
 
 images = []
 
-# Test Image
-image1_path = os.path.join(os.path.dirname(__file__), 'test.webp')
-image1 = cv2.imread(image1_path)
-images.append(image1)
-
 # Random Test Image from Untrained Set (Validation/Test Set)
 test_images_path = os.path.join(
     os.path.dirname(__file__), 
@@ -20,12 +15,12 @@ test_images_path = os.path.join(
     'general_test',
     'images',
 )
-image2_path = os.path.join(
+image_path = os.path.join(
     test_images_path,
     os.listdir(test_images_path)[random.randint(0, 10999)],
 )
-image2 = cv2.imread(image2_path)
-images.append(image2)
+image = cv2.imread(image_path)
+images.append(image)
 
 labeled_images, fec, epg = predict(
     images, 
