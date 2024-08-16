@@ -4,10 +4,7 @@ import os
 import torch
 from torchvision.models.detection import fasterrcnn_mobilenet_v3_large_fpn, faster_rcnn
 from torchvision import transforms
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
 from PIL import Image
-import numpy as np
 import cv2
 
 DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
