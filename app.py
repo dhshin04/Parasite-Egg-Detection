@@ -62,4 +62,6 @@ def index():
 
     return 'Bad Request: Must send GET or POST requests only', 400
 
-app.run(host='0.0.0.0', port=5000)
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
