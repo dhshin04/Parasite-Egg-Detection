@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from PIL import Image
 import numpy as np
+import cv2
 
 DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -120,50 +121,89 @@ def non_maximum_suppresion(prediction, threshold=0.5):
     return new_pred
 
 
-def plot_image_with_bbox(image, annotation, parasite=None):
+def add_labels(cv2_image, annotation, parasite):
     '''
     Plot image with corresponding bounding boxes
 
     Arguments:
         image (tensor): Image tensor to plot
         annotation (dict): Dictionary containing annotations for image
+        parasite (str): Type of parasite detection model
+    Returns:
+        cv2_image (np.ndarray): Labeled image in cv2 image format (np.ndarray)
     '''
 
-    # Plot Image
-    image = image.cpu()
-    fig, ax = plt.subplots(1)
-    image = image.permute(1, 2, 0)
-    ax.imshow(image)
+    CATEGORIES = {
+        1: 'Ascaris lumbricoides',
+        2: 'Capillaria philippinensis',
+        3: 'Enterobius vermicularis',
+        4: 'Fasciolopsis buski',
+        5: 'Hookworm egg',
+        6: 'Hymenolepis diminuta',
+        7: 'Hymenolepis nana',
+        8: 'Opisthorchis viverrine',
+        9: 'Paragonimus spp',
+        10: 'Taenia spp. egg',
+        11: 'Trichuris trichiura',
+    }
 
-    # Plot bounding box on image
-    bboxes = np.array(annotation['boxes'])      # Convert to np.array for matplotlib
-    for box in bboxes:
-        # Rectangular patch in COCO format
-        patch = patches.Rectangle((box[0], box[1]), box[2] - box[0], box[3] - box[1],
-                              linewidth=3, edgecolor='b', facecolor='none')
-        ax.add_patch(patch)
+    HEIGHT, WIDTH, _ = cv2_image.shape
+    THICKNESS_RATIO = 4.5e-3
+    MARGIN_RATIO = 1.5e-2
+
+    bboxes = annotation['boxes']
+    labels = annotation['labels']
+    scores = annotation['scores']
+
+    for box, label, score in zip(bboxes, labels, scores):
+        # Add bounding box
+        cv2.rectangle(
+            cv2_image, 
+            (round(box[0]), round(box[1])), 
+            (round(box[2]), round(box[3])), 
+            color=(255, 0, 0), 
+            thickness=max(1, round((HEIGHT + WIDTH) / 2 * THICKNESS_RATIO)),
+        )
+
+        # Add label
+        margin = round((HEIGHT + WIDTH) / 2 * MARGIN_RATIO)
+        if box[1] < margin:
+            label_position = (round(box[0]), round(box[3]) + margin)
+        else:
+            label_position = (round(box[0]), round(box[1]) - margin)
+
+        if parasite == 'strongylid':
+            label_text = str(round(score * 100, 1)) + '%'
+            fontscale_ratio = 1e-3
+        else:
+            label_text = f'{CATEGORIES[label]}, {round(score * 100, 1)}%'
+            fontscale_ratio = 8e-4
+
+        cv2.putText(
+            cv2_image,
+            label_text,
+            label_position,
+            fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+            fontScale=(HEIGHT + WIDTH) / 2 * fontscale_ratio,
+            color=(255, 20, 0),
+            thickness=max(1, round((HEIGHT + WIDTH) / 2 * THICKNESS_RATIO)),
+        )
     
-    fec = len(annotation['boxes'])
-    if parasite == 'strongylid':
-        ax.set_title(f'Fecal Egg Count: {fec}')
-    else:
-        ax.set_title(f'Category: {annotation["labels"]}')
-    plt.show()
-
-    return fec
+    return cv2_image
 
 
-def make_predictions(images, parasite=None):
+def make_predictions(cv2_images, tensor_images, parasite=None):
     '''
     Make object detection inferences when given images tensor
 
     Arguments:
-        images (str): Images tensor
+        cv2_images (np.ndarray): Images in cv2 format
+        tensor_images (torch.tensor): Images in tensor format
         parasite (str): 'general'/None for general model (default) 
                         or 'strongylid' for strongylid model
     Returns:
-        fec (int): Fecal Egg Count for Image (or average if multiple images provided, 
-                   rounded to nearest integer)
+        (tuple): List of labeled PIL images, Fecal Egg Count for Image 
+                 (or average if multiple images provided, rounded to nearest integer)
     '''
 
     # Load Pre-trained Mask R-CNN Model with Custom-Trained Parameters
@@ -188,29 +228,32 @@ def make_predictions(images, parasite=None):
     # Make Inference
     model.eval()                # Eval Mode: requires_grad=False, Batch Norm off
     with torch.no_grad():
-        predictions = model(images)
+        predictions = model(tensor_images)
         avg_fec = 0.
-        num_img = 0
-        for img, prediction in zip(images, predictions):
+        labeled_images = []
+
+        for cv2_img, prediction in zip(cv2_images, predictions):
             # Post-Process Output
             prediction = filter(prediction, confidence_threshold)
             prediction = non_maximum_suppresion(prediction, threshold=nms_threshold)
+
+            fec = len(prediction['boxes'])      # FEC = # objects found (num bboxes)
             
-            # TODO: create new image instead of plotting if deploying model using Flask
-            fec = plot_image_with_bbox(img, prediction, parasite)
+            # Add labels to image
+            labeled_img = add_labels(cv2_img, prediction, parasite)
+            labeled_images.append(labeled_img)
 
             avg_fec += fec
-            num_img += 1
-        avg_fec /= num_img
-    return round(avg_fec)
+        avg_fec /= len(cv2_images)
+    return labeled_images, round(avg_fec)
 
 
-def predict(image_paths, parasite='general'):
+def predict(cv2_images, parasite='general'):
     '''
     Make object detection inferences, given list of image paths
 
     Arguments:
-        image_paths: List of image paths
+        pil_images (np.ndarray): List of cv2 image inputs (as np.ndarray)
         parasite (str): 'general'/None for general model (default) 
                         or 'strongylid' for strongylid model
     Returns:
@@ -218,18 +261,26 @@ def predict(image_paths, parasite='general'):
                  (or average fec for multiple images)
     '''
 
+    # Preprocess Image
     to_tensor = transforms.ToTensor()
-    images = []
-    for image_path in image_paths:
-        # Preprocess Image - same process as FecalEggDataset to ensure consistency
-        image = Image.open(image_path).convert('RGB')   # handle grayscale or RGBA image inputted
-        image = to_tensor(image)
-        if image.dtype == torch.uint8:      # Normalize image for appropriate model input
-            image = image.float() / 255
-        image = image.to(DEVICE)
-        images.append(image)
 
-    fec = make_predictions(images, parasite)
+    tensor_images = []  # Images as tensors for making model predictions
+
+    for cv2_image in cv2_images:
+        pil_image = Image.fromarray(        # PIL image needed for transforms.ToTensor()
+            cv2.cvtColor(cv2_image, cv2.COLOR_BGR2RGB)
+        )
+
+        tensor_image = to_tensor(pil_image)
+        if tensor_image.dtype == torch.uint8:      # Normalize image for appropriate model input
+            tensor_image = tensor_image.float() / 255
+        tensor_image = tensor_image.to(DEVICE)
+        tensor_images.append(tensor_image)
+
+    assert len(cv2_images) == len(tensor_images), 'cv2 images and tensor images have different length'
+
+    # Make Prediction
+    labeled_images, fec = make_predictions(cv2_images, tensor_images, parasite)
     epg = fec * 50
 
-    return fec, epg
+    return labeled_images, fec, epg
