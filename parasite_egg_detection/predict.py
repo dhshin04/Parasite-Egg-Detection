@@ -199,7 +199,7 @@ def make_predictions(cv2_images, tensor_images, parasite=None):
         parasite (str): 'general'/None for general model (default) 
                         or 'strongylid' for strongylid model
     Returns:
-        (tuple): List of labeled PIL images, Fecal Egg Count for Image 
+        (tuple): List of labeled cv2 images, Fecal Egg Count for Image 
                  (or average if multiple images provided, rounded to nearest integer)
     '''
 
@@ -254,8 +254,8 @@ def predict(cv2_images, parasite='general'):
         parasite (str): 'general'/None for general model (default) 
                         or 'strongylid' for strongylid model
     Returns:
-        (tuple): Fecal Egg Count and Eggs per Gram for image 
-                 (or average fec for multiple images)
+        (tuple): List of labeled images in cv2 format (np.ndarray), Fecal Egg Count, 
+                 and Eggs per Gram for image (or average fec for multiple images)
     '''
 
     # Preprocess Image

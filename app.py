@@ -30,8 +30,14 @@ def condition(epg):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'GET':
-        return render_template('index.html', show=False, fec=-1, epg=-1, condition='', image='')
+        return render_template('index.html', show=False, fec=-1, epg=-1, condition='', image1_path='', image2_path='')
     elif request.method == 'POST':
+        '''
+        Request:
+            Two images (FileStorage objects)
+        Response:
+            render_template() with show=True, fec, epg, condition, and path to two labeled images
+        '''
         images_names = ['image1', 'image2']
         images = []
 
