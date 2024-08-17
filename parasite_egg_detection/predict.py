@@ -1,6 +1,6 @@
 ''' Make FEC Prediction When Given Image '''
 
-import os
+import os, math
 import torch
 from torchvision.models.detection import fasterrcnn_mobilenet_v3_large_fpn, faster_rcnn
 from torchvision import transforms
@@ -242,7 +242,7 @@ def make_predictions(cv2_images, tensor_images, parasite=None):
 
             avg_fec += fec
         avg_fec /= len(cv2_images)
-    return labeled_images, round(avg_fec)
+    return labeled_images, math.ceil(avg_fec)   # round up since overestimating better than underestimating
 
 
 def predict(cv2_images, parasite='general'):
