@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Automated Fecal Egg Count</title>
+    <title>Human Fecal Egg Detection</title>
     <link rel="icon" type="image/x-icon" href="../static/images/favicon.ico" />
 
     <!-- Bootstrap 5 -->
@@ -30,28 +30,20 @@
             class="d-flex flex-column justify-content-center align-items-center text-white h-100"
             style="min-height: 100vh; padding-top: 4em; padding-bottom: 4em"
           >
-            <h1>Automated Fecal Egg Count for Livestock</h1>
-            <a href="/humans"
+            <h1>Human Fecal Egg Detection</h1>
+            <a href="/"
               ><button
                 class="btn btn-primary btn-lg"
                 style="margin-bottom: 2em"
               >
-                Human Fecal Egg Detection
+                Livestock Fecal Egg Count
               </button></a
             >
-            <form action="/" method="POST" enctype="multipart/form-data">
+            <form action="/humans" method="POST" enctype="multipart/form-data">
               <input
                 type="file"
                 id="fec-image1"
                 name="image1"
-                class="form-control form-control-lg"
-                accept="image/*"
-                required
-              />
-              <input
-                type="file"
-                id="fec-image2"
-                name="image2"
                 class="form-control form-control-lg"
                 accept="image/*"
                 required
@@ -67,17 +59,8 @@
             <!-- Fecal Egg Count Display -->
             {% if (show) %}
             <div class="fec" id="fec">
-              <p class="display-fec">
-                Average fecal egg count in samples: <span>{{ fec }}</span>
-              </p>
-              <p class="display-fec">Eggs per gram: <span>{{ epg }}</span></p>
-              <p class="display-fec" id="condition">{{ condition }}</p>
               <img
                 src="{{ image1_path }}"
-                alt="Fecal Sample with Fecal Eggs Highlighted"
-              />
-              <img
-                src="{{ image2_path }}"
                 alt="Fecal Sample with Fecal Eggs Highlighted"
               />
             </div>
@@ -89,23 +72,5 @@
 
     <!-- Preview Menu for Uploaded Images -->
     <script src="../static/js/preview.js"></script>
-
-    <!-- Set color for animal conditions -->
-    {% if (show) %}
-    <script>
-      const condition = document.getElementById("condition");
-      const conditionText = condition.innerText;
-
-      if (conditionText.includes("Heavy Infestation")) {
-        condition.style.color = "rgb(255, 0, 0)"; // Red
-      } else if (conditionText.includes("Moderate Infestation")) {
-        condition.style.color = "rgb(255, 165, 0)"; // Orange
-      } else if (conditionText.includes("Light Infestation")) {
-        condition.style.color = "rgb(255, 255, 0)"; // Yellow
-      } else {
-        condition.style.color = "rgb(0, 255, 0)"; // Green
-      }
-    </script>
-    {% endif %}
   </body>
 </html>

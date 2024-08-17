@@ -69,5 +69,47 @@ def index():
     return 'Bad Request: Must send GET or POST requests only', 400
 
 
+@app.route('/humans', methods=['GET', 'POST'])
+def humans():
+    if request.method == 'GET':
+        return render_template('human.html', show=False, image1_path='')
+    elif request.method == 'POST':
+        '''
+        Request:
+            Two images (FileStorage objects)
+        Response:
+            render_template() with show=True, fec, epg, condition, and path to two labeled images
+        '''
+        images_names = ['image1']
+        images = []
+
+        for image_name in images_names:
+            if image_name not in request.files:
+                return 'No image provided', 404
+
+            image_file = request.files[image_name]
+            image_byte = np.frombuffer(image_file.read(), dtype=np.uint8)   # Convert file to bytestring np array
+            image = cv2.imdecode(image_byte, cv2.IMREAD_COLOR)     # Read image from bytestring array
+            images.append(image)
+
+        labeled_images, _, _ = predict(
+            images, 
+            parasite='general',
+        )
+
+        images_path = os.path.join(os.path.dirname(__file__), 'static', 'images')
+        os.chdir(images_path)
+
+        filenames = []
+        for image_name, image in zip(images_names, labeled_images):
+            filename = image_name + '_labeled.jpg'
+            cv2.imwrite(filename, image)
+            filenames.append(filename)
+
+        return render_template('human.html', show=True, image1_path=f'../static/images/{filenames[0]}')
+
+    return 'Bad Request: Must send GET or POST requests only', 400
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

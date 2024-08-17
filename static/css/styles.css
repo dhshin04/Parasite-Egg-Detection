@@ -22,7 +22,8 @@ h1 {
     font-weight: 700;
     font-family: 'Roboto', sans-serif;
     font-size: 3rem;
-    margin-bottom: 0.8em;
+    margin-bottom: 0.6em;
+    padding: 0em 1em 0em 1em;
 }
 
 @media only screen and (min-width: 1000px) {
