@@ -1,4 +1,4 @@
-''' Test Model Prediction on General Model '''
+''' Demonstration of Detection Models '''
 
 import os, glob
 from parasite_egg_detection.predict import predict
@@ -12,7 +12,7 @@ test_images_path = os.path.join(
     os.path.dirname(__file__), 
     'parasite_egg_detection',
     'data',
-    'general_test',
+    'general_test',     # Untrained set
     'images',
 )
 image_path = os.path.join(
@@ -24,9 +24,10 @@ images.append(image)
 
 labeled_images, fec, epg = predict(
     images, 
-    parasite='general',
+    parasite='general',     # General Model demonstration
 )
 
+# Check out demo predictions in the predictions/ folder
 predictions_path = os.path.join(os.path.dirname(__file__), 'predictions')
 
 # Create predictions folder if it does not exist
