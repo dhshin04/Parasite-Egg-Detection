@@ -1,7 +1,7 @@
 ''' Flask Application for Strongylid Fecal Egg Count '''
 
 from flask import Flask, render_template, request
-import os, glob, random, cv2
+import os, cv2
 import numpy as np
 from parasite_egg_detection.predict import predict
 
