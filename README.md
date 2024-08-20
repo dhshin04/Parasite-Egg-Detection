@@ -72,7 +72,7 @@ git clone https://github.com/dhshin04/Parasite-Egg-Detection.git
 pip install -r requirements.txt
 ```
 
-3. Import dataset from the [IEEE Dataset](https://ieee-dataport.org/competitions/parasitic-egg-detection-and-classification-microscopic-images#files).
+3. Import dataset from the [IEEE Dataset](https://ieee-dataport.org/competitions/parasitic-egg-detection-and-classification-microscopic-images).
 
 To run the Docker image containing the detection models, do the following and visit localhost:5000:
 
