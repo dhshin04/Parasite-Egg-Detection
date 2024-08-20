@@ -6,7 +6,7 @@
 
 [Installation - with Docker instructions]
 
-## Contributions
+## How to Contribute
 
 [Contributions - project can benefit from larger datasets and possibly experimenting with
 other model architectures]
