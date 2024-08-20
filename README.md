@@ -6,6 +6,8 @@ This repository contains code for detection algorithms designed to identify and 
 
 ## Project Description
 
+_Frameworks and Tools: PyTorch, Flask, AWS, Nvidia NGC, Docker_
+
 This project aims to automate the detection and classification of parasitic eggs in microscopic images of fecal samples, significantly reducing the time and cost associated with traditional methods. Manual detection, while effective, is both labor-intensive and expensive. For instance, identifying strongylid eggs in ruminants — a process that can take up to two weeks and cost $30 per sample — highlights the inefficiency of traditional approaches.
 
 The project encompasses two algorithms: one designed for detecting fecal eggs in humans and another for ruminants. The human-focused algorithm leverages a fine-tuned version of Torchvision's Faster R-CNN model, featuring a 12-unit output layer that identifies 11 classes of parasitic eggs plus one class indicating no eggs. When provided with a microscopic image, the algorithm outputs a new image annotated with bounding boxes around detected eggs, along with their corresponding classes and confidence scores as shown below:
