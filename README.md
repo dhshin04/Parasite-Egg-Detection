@@ -36,7 +36,8 @@ The detection algorithms are stored under parasite_egg_detection/.
 
 - data/: Holds the image datasets and the Dataset class for PyTorch.
 - saved_models/: Stores all saved models and their descriptions, saved using PyTorch.
-- eneral_model.py: Handles model loading, fine-tuning, training, and saving for the human fecal egg detection model.
+- load_data.py: Preprocess data and prepare DataLoaders in PyTorch.
+- general_model.py: Handles model loading, fine-tuning, training, and saving for the human fecal egg detection model.
 - strongylid_model.py: Similar to general_model.py, but for the ruminant fecal egg detection model.
 - test_performance.py: Evaluates model performance using metrics such as precision, recall, and mean Average Precision (mAP).
 - evaluate.py: Contains the calculations for precision and recall scores.
