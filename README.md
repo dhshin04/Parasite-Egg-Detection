@@ -1,6 +1,6 @@
 # Parasite Egg Detection
 
-Microscopic Analysis and Detection of Parasitic Eggs in Human and Ruminant Fecal Samples Using Deep Learning
+**Microscopic Analysis and Detection of Parasitic Eggs in Human and Ruminant Fecal Samples Using Deep Learning**
 
 This repository contains code for detection algorithms designed to identify and classify parasitic eggs in microscopic images of human and ruminant fecal samples. The project includes two algorithms: one designed for human fecal samples and another for ruminants, the latter of which also calculates fecal egg count (FEC) to assess infestation levels. This approach aims to significantly reduce both the time and cost associated with traditional methods.
 
@@ -64,7 +64,7 @@ git clone https://github.com/dhshin04/Parasite-Egg-Detection.git
 pip install -r requirements.txt
 ```
 
-3. Import dataset from [IEEE Dataset](https://ieee-dataport.org/competitions/parasitic-egg-detection-and-classification-microscopic-images#files)
+3. Import dataset from the [IEEE Dataset](https://ieee-dataport.org/competitions/parasitic-egg-detection-and-classification-microscopic-images#files).
 
 To run the Docker image containing the detection models, do the following and visit localhost:5000:
 
