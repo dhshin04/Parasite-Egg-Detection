@@ -20,7 +20,12 @@ In the Flask web application, two images are fed into the algorithm, and the fec
 
 ## Results
 
-The results of the detection models are documented in the following files:
+Overview:
+
+- Human Fecal Egg Detection Model: mAP@0.5: 0.9372, mAP@0.5-0.95: 0.7681 for 440 test set images
+- Ruminant Fecal Egg Detection Model: mAP@0.5: 0.9302, mAP@0.5-0.95: 0.6172 for 25 test set images
+
+The specific results of the detection models are documented in the following files:
 
 - Human Fecal Egg Detection Model: references/general_model_results.txt
 - Ruminant Fecal Egg Detection Model: references/strongylid_model_results.txt
