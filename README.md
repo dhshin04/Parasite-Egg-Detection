@@ -1,6 +1,6 @@
 # Parasite Egg Detection
 
-[Project Description - with visualizations]
+[Project Description - with visualizations and link to previous GitHub]
 
 ## How to Install and Run
 
@@ -14,3 +14,7 @@ other model architectures]
 ## Credits
 
 [Credits and Dataset Source]
+
+## Future Improvements
+
+[Improvements to Make]
